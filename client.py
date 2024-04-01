@@ -12,7 +12,6 @@ from torchvision.datasets import CIFAR10
 # from grace:
 import matplotlib.pyplot as plt
 import numpy as np
-from utils import curriculum_learning_loss, calculate_threshold, save_data, show_failed_imgs
 
 # Femnist specific
 from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST

@@ -12,16 +12,15 @@ from flwr.common import (
 import numpy as np
 import pandas as pd
 
+from Strategies.fedavg_sat import FedAvgSat
+
 from configparser import ConfigParser
 import os
 
 import wandb
 
-# #############################################################################
-# Aggregation metrics
-# #############################################################################
 
-class AggregateCustomMetricStrategy(fl.server.strategy.FedAvg):
+class Strategy_Sat(FedAvgSat):
     def aggregate_evaluate(
         self,
         server_round: int,
@@ -50,10 +49,12 @@ class AggregateCustomMetricStrategy(fl.server.strategy.FedAvg):
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}
 
+
 # #############################################################################
-# Federating the pipeline with Flower
+# Federating pipeline with Flower
 # #############################################################################
 
+### Run all configuration files
 for file_name in os.listdir("config_files"):
 
     # Read config.ini file
@@ -63,47 +64,42 @@ for file_name in os.listdir("config_files"):
     # making sure to run multiple trials for each run
     for i in range(int(config_object["TEST_CONFIG"]["trial"])):
 
-
-        
         t_name = "Run"
         for keys in config_object["TEST_CONFIG"].keys():
             print(keys)
             t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
         
-        # Saving to Weights and Biases
+        ### Saving to Weights and Biases
         run = wandb.init(
             # set the wandb project where this run will be logged
             project=t_name,
-
             # track hyperparameters and run metadata
             config=config_object["TEST_CONFIG"]
         )
         results = {}
 
 
-        def fit_config(server_round: int):
-            
+        def fit_config(server_round: int):  
             config = config_object["TEST_CONFIG"]
             return config
-
-        # Create strategy and run server
-        SelfPaced = AggregateCustomMetricStrategy(
-            on_fit_config_fn=fit_config,        #fit_config,  # For future config function based changes
-        )
 
         results = fl.simulation.start_simulation(
             num_clients= int(config_object["TEST_CONFIG"]["clients"]),
             clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
             client_fn=client_fn,
             config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
-            strategy=SelfPaced
+            strategy=Strategy_Sat(
+                on_fit_config_fn=fit_config, 
+                satellite_access_csv = "Strategies/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv"
+            )
         )
-        losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
-        accuracies_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.metrics_distributed['accuracy']]})
-        if not os.path.exists("results/"+t_name):
-            os.makedirs("results/"+t_name)
-        losses_distributed.to_csv('results/'+t_name+"/losses_distributed.csv")
-        accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
+
+        # losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
+        # accuracies_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.metrics_distributed['accuracy']]})
+        # if not os.path.exists("results/"+t_name):
+        #     os.makedirs("results/"+t_name)
+        # losses_distributed.to_csv('results/'+t_name+"/losses_distributed.csv")
+        # accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
         ray.shutdown()
         gc.collect()
         run.finish()
