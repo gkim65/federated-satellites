@@ -21,7 +21,8 @@ config_object["TEST_CONFIG"] = {
         "clients": 8,
         "dataset": "FEMNIST",
         "learning_rate": 0.001,
-        "momentum": 0.9
+        "momentum": 0.9,
+        "wait_time" : 7
     }
 
 for i in test_cases:

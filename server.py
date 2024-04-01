@@ -91,6 +91,7 @@ for file_name in os.listdir("config_files"):
             strategy=Strategy_Sat(
                 on_fit_config_fn=fit_config, 
                 satellite_access_csv = "Strategies/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv"
+                time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
             )
         )
 

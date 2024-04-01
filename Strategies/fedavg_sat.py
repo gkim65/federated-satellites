@@ -32,11 +32,13 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         *,
         on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
         satellite_access_csv: "Strategies/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv",
+        time_wait: 7
     ) -> None:
 
         super().__init__()
         self.on_fit_config_fn = on_fit_config_fn
         self.counter = 0
+        self.time_wait = time_wait
         self.satellite_access_csv = read_sat_csv(satellite_access_csv)
         self.satellite_client_list = []
     
@@ -54,7 +56,7 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         start_time = self.satellite_access_csv['Start Time Seconds datetime'].iloc[self.counter]
         delta = timedelta(hours=2)
         client_list = []
-        while (timedelta(hours=7) > delta):
+        while (timedelta(hours=self.time_wait) > delta):
             client_list.append(int(self.satellite_access_csv['From Object'].iloc[self.counter][-2:-1])-1)
             self.counter +=1
             delta = self.satellite_access_csv['Start Time Seconds datetime'].iloc[self.counter]-start_time
