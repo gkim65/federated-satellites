@@ -1,0 +1,96 @@
+import flwr as fl
+import ray
+import gc
+from client import client_fn
+from typing import Dict, List, Optional, Tuple, Union
+from flwr.server.client_proxy import ClientProxy
+from flwr.common import (
+    EvaluateRes,
+    FitRes,
+    Scalar,
+)
+import numpy as np
+import pandas as pd
+
+from configparser import ConfigParser
+import os
+
+# TEST = "fem_sp_imgs_per_e"
+# ROUND = 5
+# EPOCHS = 25
+# NUM_CLIENTS = 8
+# THRESHOLD_TYPE = 1
+# PERCENTILE_TYPE = "linear"
+# LOSS_THRESHOLD = 4
+# test_lambda = [99.5]
+# dataset = "Femnist"
+
+class AggregateCustomMetricStrategy(fl.server.strategy.FedAvg):
+    def aggregate_evaluate(
+        self,
+        server_round: int,
+        results: List[Tuple[ClientProxy, EvaluateRes]],
+        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+        ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        """Aggregate evaluation accuracy using weighted average."""
+
+        if not results:
+            return None, {}
+
+        # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
+        aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
+
+        # Weigh accuracy of each client by number of examples used
+        accuracies = [r.metrics["accuracy"] * r.num_examples for _, r in results]
+        examples = [r.num_examples for _, r in results]
+
+        # Aggregate and print custom metric
+        aggregated_accuracy = sum(accuracies) / sum(examples)
+        print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
+
+        # Return aggregated loss and metrics (i.e., aggregated accuracy)
+        return aggregated_loss, {"accuracy": aggregated_accuracy}
+
+
+
+for file_name in os.listdir("config_files"):
+
+    # Read config.ini file
+    config_object = ConfigParser()
+    config_object.read("config_files/"+file_name)
+
+    results = {}
+
+    t_name = "Run"
+    for keys in config_object["TEST_CONFIG"].keys():
+        print(keys)
+        t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
+    
+    results = {}
+
+    def fit_config(server_round: int):
+        
+        config = config_object["TEST_CONFIG"]
+        return config
+
+    # Create strategy and run server
+    SelfPaced = AggregateCustomMetricStrategy(
+        on_fit_config_fn=fit_config,        #fit_config,  # For future config function based changes
+    )
+
+    results = fl.simulation.start_simulation(
+        num_clients= int(config_object["TEST_CONFIG"]["clients"]),
+        clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
+        client_fn=client_fn,
+        config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
+        strategy=SelfPaced
+    )
+    losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
+    accuracies_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.metrics_distributed['accuracy']]})
+    if not os.path.exists("results/"+t_name):
+        os.makedirs("results/"+t_name)
+    losses_distributed.to_csv('results/'+t_name+"/losses_distributed.csv")
+    accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
+    ray.shutdown()
+    gc.collect()
+
