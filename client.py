@@ -46,22 +46,9 @@ def train(net, trainloader, config, cid):
     criterion_mean = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
 
-    # criterion = torch.nn.CrossEntropyLoss(reduction='none') # @ N'yoma make sure to set reduction to none
-    # criterion_mean = torch.nn.CrossEntropyLoss()
-    # optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
-    losses = [] # @ N'yoma add things you want to save in here
-    images_failed = []
-    images_passed = []
-
-    # loss_threshold = calculate_threshold(net, 
-    #                         criterion, 
-    #                         trainloader, 
-    #                         config["loss_threshold"], 
-    #                         DEVICE,
-    #                         config["threshold_type"], # change 0 for just flat num, 1, for percentile
-    #                         config["percentile_type"]) # change "linear" for true percentile, "normal_unbiased" for normal
-
+    # losses = [] # add things you want to save in here
+    # images_failed = []
+    # images_passed = []
 
     for epoch in range(int(config['epochs'])):
         batch_count = 0       # @ N'yoma add the batch count for saving files
@@ -73,23 +60,6 @@ def train(net, trainloader, config, cid):
             images = images.to(DEVICE)      # @ make sure to set images/labels to the device you're using
             labels = labels.to(DEVICE)
 
-            # trash_indices, keep_indices, loss_threshold, loss_indv = curriculum_learning_loss(net, 
-            #                                                  criterion, 
-            #                                                  images, 
-            #                                                  labels, 
-            #                                                  loss_threshold, 
-            #                                                  DEVICE) 
-            
-            # Saving data here, add more things you want to save if u need it
-            # for loss,lab in zip(loss_indv,labels):
-            #   losses.append([loss.item(),loss_threshold,epoch,batch_count,lab.item()])
-
-            # for image,label, loss_ind in zip(images[trash_indices], labels[trash_indices], loss_indv[trash_indices]):
-            #   images_failed.append([image,label,loss_ind, loss_threshold, epoch])
-            # for image,label, loss_ind in zip(images[keep_indices], labels[keep_indices], loss_indv[keep_indices]):
-            #   images_passed.append([image,label,loss_ind, loss_threshold, epoch])
-                        
-            # batch_count += 1
             criterion_mean(net(images), labels).backward()
             optimizer.step()
     

@@ -8,5 +8,4 @@ Then, you can start using FEMNIST.
 
 #### Active Todos:
 - `client_fn` can't take in any inputs so I can't force it to take in config parameter to run a specific dataset
-- incorporate weights and biases
 - federated_sat function/strategy

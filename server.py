@@ -15,15 +15,11 @@ import pandas as pd
 from configparser import ConfigParser
 import os
 
-# TEST = "fem_sp_imgs_per_e"
-# ROUND = 5
-# EPOCHS = 25
-# NUM_CLIENTS = 8
-# THRESHOLD_TYPE = 1
-# PERCENTILE_TYPE = "linear"
-# LOSS_THRESHOLD = 4
-# test_lambda = [99.5]
-# dataset = "Femnist"
+import wandb
+
+# #############################################################################
+# Aggregation metrics
+# #############################################################################
 
 class AggregateCustomMetricStrategy(fl.server.strategy.FedAvg):
     def aggregate_evaluate(
@@ -47,11 +43,16 @@ class AggregateCustomMetricStrategy(fl.server.strategy.FedAvg):
         # Aggregate and print custom metric
         aggregated_accuracy = sum(accuracies) / sum(examples)
         print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
-
+        
+        # log metrics to wandb
+        run.log({"acc": aggregated_accuracy, "loss": aggregated_loss})
+        
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}
 
-
+# #############################################################################
+# Federating the pipeline with Flower
+# #############################################################################
 
 for file_name in os.listdir("config_files"):
 
@@ -59,38 +60,51 @@ for file_name in os.listdir("config_files"):
     config_object = ConfigParser()
     config_object.read("config_files/"+file_name)
 
-    results = {}
+    # making sure to run multiple trials for each run
+    for i in range(int(config_object["TEST_CONFIG"]["trial"])):
 
-    t_name = "Run"
-    for keys in config_object["TEST_CONFIG"].keys():
-        print(keys)
-        t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
-    
-    results = {}
 
-    def fit_config(server_round: int):
         
-        config = config_object["TEST_CONFIG"]
-        return config
+        t_name = "Run"
+        for keys in config_object["TEST_CONFIG"].keys():
+            print(keys)
+            t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
+        
+        # Saving to Weights and Biases
+        run = wandb.init(
+            # set the wandb project where this run will be logged
+            project=t_name,
 
-    # Create strategy and run server
-    SelfPaced = AggregateCustomMetricStrategy(
-        on_fit_config_fn=fit_config,        #fit_config,  # For future config function based changes
-    )
+            # track hyperparameters and run metadata
+            config=config_object["TEST_CONFIG"]
+        )
+        results = {}
 
-    results = fl.simulation.start_simulation(
-        num_clients= int(config_object["TEST_CONFIG"]["clients"]),
-        clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
-        client_fn=client_fn,
-        config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
-        strategy=SelfPaced
-    )
-    losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
-    accuracies_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.metrics_distributed['accuracy']]})
-    if not os.path.exists("results/"+t_name):
-        os.makedirs("results/"+t_name)
-    losses_distributed.to_csv('results/'+t_name+"/losses_distributed.csv")
-    accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
-    ray.shutdown()
-    gc.collect()
+
+        def fit_config(server_round: int):
+            
+            config = config_object["TEST_CONFIG"]
+            return config
+
+        # Create strategy and run server
+        SelfPaced = AggregateCustomMetricStrategy(
+            on_fit_config_fn=fit_config,        #fit_config,  # For future config function based changes
+        )
+
+        results = fl.simulation.start_simulation(
+            num_clients= int(config_object["TEST_CONFIG"]["clients"]),
+            clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
+            client_fn=client_fn,
+            config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
+            strategy=SelfPaced
+        )
+        losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
+        accuracies_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.metrics_distributed['accuracy']]})
+        if not os.path.exists("results/"+t_name):
+            os.makedirs("results/"+t_name)
+        losses_distributed.to_csv('results/'+t_name+"/losses_distributed.csv")
+        accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
+        ray.shutdown()
+        gc.collect()
+        run.finish()
 
