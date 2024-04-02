@@ -10,12 +10,12 @@ config_object = ConfigParser()
 ####################################################################
 #####  Put the specific variables you want to test in a list   #####
 ####################################################################
-variable_name = "epochs"
-test_cases = [1,2,3,4]
+variable_name = "wait_time"
+test_cases = [2,4,8,16]
 
 config_object["TEST_CONFIG"] = {
-        "name": "yoo",
-        "round": 5,
+        "name": "fedavgsats_final",
+        "round": 40,
         "epochs": 25,
         "trial": 5,
         "clients": 8,

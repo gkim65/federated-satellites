@@ -25,7 +25,7 @@ from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST
 warnings.filterwarnings("ignore", category=UserWarning)
 if torch.cuda.is_available():
     print ("GPU CUDA")
-    DEVICE = torch.device("gpu")
+    DEVICE = torch.device("cuda")
 elif torch.backends.mps.is_available():
     print ("MPS device")
     DEVICE = torch.device("mps")

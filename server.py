@@ -90,7 +90,7 @@ for file_name in os.listdir("config_files"):
             config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
             strategy=Strategy_Sat(
                 on_fit_config_fn=fit_config, 
-                satellite_access_csv = "Strategies/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv"
+                satellite_access_csv = "Strategies/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv",
                 time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
             )
         )
