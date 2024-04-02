@@ -26,7 +26,7 @@ def read_sat_csv(filename):
 
 
 if __name__ == "__main__":
-    filepath2 = "/Users/gracekim/Documents/School_Everything_and_LEARNING/Cambridge/Classes_MPhil/Final Proj/federated-satellites/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv"
+    filepath2 = "/nfs-share/grk27/Documents/federated-satellites/Strategies/csv_stk/Chain1_Access_Data_9sat_5plane.csv"
     satellite_data2 = pd.read_csv(filepath2)
     satellite_data2['Start Time Seconds Cumulative'] = [time_to_int(datetime.strptime(x, "%d %b %Y %H:%M:%S.%f")) for x in satellite_data2['Start Time (UTCG)']]
     satellite_data2['End Time Seconds Cumulative'] = [time_to_int(datetime.strptime(x, "%d %b %Y %H:%M:%S.%f")) for x in satellite_data2['Stop Time (UTCG)']]
@@ -47,8 +47,8 @@ if __name__ == "__main__":
         delta = timedelta(hours=2)
         client_list = []
 
-        while (timedelta(hours=7) > delta):
-            client_list.append(int(satellite_data3['From Object'].iloc[counter][-2:-1])-1)
+        while (timedelta(hours=16) > delta):
+            client_list.append((int(satellite_data3['From Object'].iloc[counter][-2:-1])-1)*9+int(satellite_data3['From Object'].iloc[counter][-1:]))
             counter +=1
             delta = satellite_data3['Start Time Seconds datetime'].iloc[counter]-start_time
             print(delta)

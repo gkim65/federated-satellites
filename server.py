@@ -74,7 +74,16 @@ for file_name in os.listdir("config_files"):
             # set the wandb project where this run will be logged
             project=t_name,
             # track hyperparameters and run metadata
-            config=config_object["TEST_CONFIG"]
+            config= {"name": config_object["TEST_CONFIG"]["name"],
+                "round": config_object["TEST_CONFIG"]["round"],
+                "epochs": config_object["TEST_CONFIG"]["epochs"],
+                "trial": config_object["TEST_CONFIG"]["trial"],
+                "clients": config_object["TEST_CONFIG"]["clients"],
+                "dataset": config_object["TEST_CONFIG"]["dataset"],
+                "learning_rate": config_object["TEST_CONFIG"]["learning_rate"],
+                "momentum": config_object["TEST_CONFIG"]["momentum"],
+                "wait_time" : config_object["TEST_CONFIG"]["wait_time"]
+            }
         )
         results = {}
 
@@ -90,7 +99,7 @@ for file_name in os.listdir("config_files"):
             config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
             strategy=Strategy_Sat(
                 on_fit_config_fn=fit_config, 
-                satellite_access_csv = "Strategies/csv_stk/Chain2_Access_Data_1_sat_5_plane.csv",
+                satellite_access_csv = "Strategies/csv_stk/Chain1_Access_Data_9sat_5plane.csv",
                 time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
             )
         )
