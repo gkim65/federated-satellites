@@ -13,6 +13,8 @@ config_object = ConfigParser()
 variable_name = "wait_time"
 test_cases = [4,8,16,32,64]
 
+rounds = [50,40,25,15,9]
+
 config_object["TEST_CONFIG"] = {
         "name": "fedavgsats_9_5",
         "round": 50,
@@ -25,9 +27,11 @@ config_object["TEST_CONFIG"] = {
         "wait_time" : 7
     }
 
-for i in test_cases:
+for test,round in zip(test_cases,rounds):
     #Write the above sections to config.ini file
-    config_object["TEST_CONFIG"][variable_name] = str(i)
-    with open('config_files/config_'+str(i)+'.ini', 'w') as conf:
+    config_object["TEST_CONFIG"][variable_name] = str(test)
+
+    config_object["TEST_CONFIG"]["round"] = str(round)
+    with open('config_files/config_'+str(test)+'.ini', 'w') as conf:
         config_object.write(conf)
 
