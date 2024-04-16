@@ -45,12 +45,9 @@ def train(net, trainloader, config, cid):
     criterion_mean = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
 
-    # losses = [] # add things you want to save in here
-    # images_failed = []
-    # images_passed = []
+
 
     for epoch in range(int(config['epochs'])):
-        batch_count = 0       # @ N'yoma add the batch count for saving files
         print("Epoch: "+str(epoch))
         
         for images, labels in trainloader:

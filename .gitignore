@@ -6,3 +6,5 @@ FEMNIST_tests/femnist.tar.gzhqw_t35qtmp
 *wandb
 *__pycache__
 *.out
+*.csv
+*.DS_Store

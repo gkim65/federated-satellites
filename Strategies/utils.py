@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 from datetime import timedelta
-
+import math
 
 def time_to_int(dateobj):
 
@@ -15,11 +15,16 @@ def time_to_int(dateobj):
 
 def read_sat_csv(filename):
     sat_df = pd.read_csv(filename)
+    n_s = int(filename[19:].split("_")[0][:-1])
+    n_c = int(filename[19:].split("_")[1][:-1])
     new_keys = ['Start Time Seconds Cumulative','End Time Seconds Cumulative','Start Time Seconds datetime','End Time Seconds datetime']
-    old_keys = ['Start Time (UTCG)','Stop Time (UTCG)','Start Time (UTCG)','Stop Time (UTCG)']
+    old_keys = ['Start Time (UTCG)','Stop Time (UTCG)']
     for i in range(2):
         sat_df[new_keys[i]] = [time_to_int(datetime.strptime(x, "%d %b %Y %H:%M:%S.%f")) for x in sat_df[old_keys[i]]]
-        sat_df[new_keys[i+2]] = [(datetime.strptime(x, "%d %b %Y %H:%M:%S.%f")) for x in sat_df[old_keys[i+2]]]
+        sat_df[new_keys[i+2]] = [(datetime.strptime(x, "%d %b %Y %H:%M:%S.%f")) for x in sat_df[old_keys[i]]]
+    sat_df['ground_station'] = [x[9:] for x in sat_df['To Object']]
+    sat_df['cluster_num'] = [int(x[24:25+int(math.log10(n_c))]) for x in sat_df['From Object']]
+    sat_df['sat_num'] = [int(x[-1-int(math.log10(n_s)):]) for x in sat_df['From Object']]
     sat_df_sorted = sat_df.sort_values('Start Time Seconds Cumulative').reset_index()
     print(sat_df_sorted)
     return sat_df_sorted

@@ -19,37 +19,6 @@ import os
 
 import wandb
 
-
-# class Strategy_Sat(FedAvgSat):
-#     def aggregate_evaluate(
-#         self,
-#         server_round: int,
-#         results: List[Tuple[ClientProxy, EvaluateRes]],
-#         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-#         ) -> Tuple[Optional[float], Dict[str, Scalar]]:
-#         """Aggregate evaluation accuracy using weighted average."""
-
-#         if not results:
-#             return None, {}
-
-#         # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
-#         aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
-
-#         # Weigh accuracy of each client by number of examples used
-#         accuracies = [r.metrics["accuracy"] * r.num_examples for _, r in results]
-#         examples = [r.num_examples for _, r in results]
-
-#         # Aggregate and print custom metric
-#         aggregated_accuracy = sum(accuracies) / sum(examples)
-#         print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
-        
-#         # log metrics to wandb
-#         run.log({"acc": aggregated_accuracy, "loss": aggregated_loss})
-        
-#         # Return aggregated loss and metrics (i.e., aggregated accuracy)
-#         return aggregated_loss, {"accuracy": aggregated_accuracy}
-
-
 # #############################################################################
 # Federating pipeline with Flower
 # #############################################################################
@@ -64,10 +33,12 @@ for file_name in os.listdir("config_files"):
     # making sure to run multiple trials for each run
     for i in range(int(config_object["TEST_CONFIG"]["trial"])):
 
+        # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
         t_name = "Run"
         for keys in config_object["TEST_CONFIG"].keys():
             print(keys)
-            t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
+            if keys != "sim_fname":
+                t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
         
         ### Saving to Weights and Biases
         wandb.init(
@@ -82,7 +53,11 @@ for file_name in os.listdir("config_files"):
                 "dataset": config_object["TEST_CONFIG"]["dataset"],
                 "learning_rate": config_object["TEST_CONFIG"]["learning_rate"],
                 "momentum": config_object["TEST_CONFIG"]["momentum"],
-                "wait_time" : config_object["TEST_CONFIG"]["wait_time"]
+                "wait_time" : config_object["TEST_CONFIG"]["wait_time"],
+                "sim_fname" : config_object["TEST_CONFIG"]["sim_fname"],
+                "n_sat_in_cluster" : config_object["TEST_CONFIG"]["n_sat_in_cluster"],
+                "n_cluster" : config_object["TEST_CONFIG"]["n_cluster"],
+                "gs_locations" : config_object["TEST_CONFIG"]["gs_locations"]
             }
         )
         results = {}
@@ -92,7 +67,6 @@ for file_name in os.listdir("config_files"):
             config = config_object["TEST_CONFIG"]
             return config
 
-        strat = FedAvgSat
         results = fl.simulation.start_simulation(
             num_clients= int(config_object["TEST_CONFIG"]["clients"]),
             clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
@@ -100,18 +74,12 @@ for file_name in os.listdir("config_files"):
             config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
             strategy=FedAvgSat(
                 on_fit_config_fn=fit_config, 
-                satellite_access_csv = "Strategies/csv_stk/Chain1_Access_Data_9sat_5plane.csv",
+                satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
                 time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
                 )
                 
         )
 
-        # losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
-        # accuracies_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.metrics_distributed['accuracy']]})
-        # if not os.path.exists("results/"+t_name):
-        #     os.makedirs("results/"+t_name)
-        # losses_distributed.to_csv('results/'+t_name+"/losses_distributed.csv")
-        # accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
         ray.shutdown()
         gc.collect()
         wandb.finish()

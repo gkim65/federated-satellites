@@ -1,4 +1,13 @@
 """
+### TODO: FIX TITLE
+Federated PROX (FedAvg) modified with satellite constellation implementations
+
+Originally from 2020 Flower Labs GmbHl, implmenting:
+Federated Averaging (FedAvg) [McMahan et al., 2016] strategy.
+Paper: arxiv.org/abs/1602.05629
+"""
+
+"""
 Federated Averaging (FedAvg) modified with satellite constellation implementations
 
 Originally from 2020 Flower Labs GmbHl, implmenting:
@@ -26,9 +35,9 @@ from Strategies.utils import read_sat_csv
 from datetime import timedelta
 from datetime import datetime
 import wandb
-import numpy as np
+import math
 
-class FedAvgSat(fl.server.strategy.FedAvg):
+class FedProxSat(fl.server.strategy.FedAvg):
     def __init__(
         self,
         *,
@@ -55,30 +64,30 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
         fit_ins = FitIns(parameters, config)
-        
-        start_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
-        start_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
 
+        start_time = self.satellite_access_csv['Start Time Seconds datetime'].iloc[self.counter]
         delta = timedelta(hours=2)
-        client_list = np.zeros(int(config["clients"]))
+        client_list = []
         
         # Check if I need this later
-        n_s = int(self.satellite_access_csv_name[19:].split("_")[0][:-1])
-        n_c = int(self.satellite_access_csv_name[19:].split("_")[1][:-1])
-        config["n_cluster"]
-        config["n_sat_in_cluster"]
+        # n_s = int(self.satellite_access_csv_name[19:].split("_")[0][:-1])
+        # n_c = int(self.satellite_access_csv_name[19:].split("_")[1][:-1])
+
         
-        while sum(client_list) < (int(config["clients"]))*2:
-            satellite_id = ((self.satellite_access_csv['cluster_num'].iloc[self.counter])-1)
-            if client_list[satellite_id] < 2:
-                client_list[satellite_id] += 1
+        while (timedelta(hours=self.time_wait) > delta):
+            client_list.append(((self.satellite_access_csv['cluster_num'].iloc[self.counter])-1)*5+self.satellite_access_csv['sat_num'].iloc[self.counter])
+            # if self.satellite_access_csv_name == "Strategies/csv_stk/Chain1_Access_Data_9sat_5plane.csv":
+            #     client_list.append((int(self.satellite_access_csv['From Object'].iloc[self.counter][-2:-1])-1)*9+int(self.satellite_access_csv['From Object'].iloc[self.counter][-1:]))
+            # else:
+            #     client_list.append(int(self.satellite_access_csv['From Object'].iloc[self.counter][-2:-1])-1)
             self.counter +=1
-
-        stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
-        stop_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
-
-        wandb.log({"start_time": start_time,"start_time_sec": start_time_sec, "stop_time": stop_time, "stop_time_sec": stop_time_sec, "server_round": server_round,"duration" : stop_time_sec - start_time_sec})
-        
+            delta = self.satellite_access_csv['Start Time Seconds datetime'].iloc[self.counter]-start_time
+            print(delta)
+        print(client_list)
+        client_twice =[]
+        for item in client_list:
+            if client_list.count(item)>1:
+                client_twice.append(item)
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
@@ -89,9 +98,12 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             num_clients=sample_size, min_num_clients=min_num_clients
         )
 
-        self.satellite_client_list = [int(client.cid) for client in clients]
+        x = [client for client in clients if int(client.cid) in client_twice]
+        print("client_list:")
+        print(x)
+        self.satellite_client_list = client_twice
         # Return client/config pairs
-        return [(client, fit_ins) for client in clients]
+        return [(client, fit_ins) for client in x]
     
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -129,6 +141,8 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         """Aggregate evaluation accuracy using weighted average."""
 
         if not results:
+            wandb.log({"acc": 0, "loss": 0, "server_round": server_round})
+            print(f"Round {server_round} accuracy aggregated from client results: 0")
             return None, {}
 
         # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
