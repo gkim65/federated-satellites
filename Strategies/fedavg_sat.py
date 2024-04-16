@@ -22,11 +22,14 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from Strategies.utils import read_sat_csv
+from Strategies.utils import choose_sat_csv
 from datetime import timedelta
 from datetime import datetime
 import wandb
 import numpy as np
+import pandas as pd
+import ray
+import gc
 
 class FedAvgSat(fl.server.strategy.FedAvg):
     def __init__(
@@ -42,7 +45,16 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         self.counter = 0
         self.time_wait = time_wait
         self.satellite_access_csv_name = satellite_access_csv
-        self.satellite_access_csv = read_sat_csv(satellite_access_csv)
+        self.satellite_access_csv = pd.read_csv(satellite_access_csv)
+
+        og_s = int(self.satellite_access_csv_name[19:].split("_")[0][:-1])
+        og_c = int(self.satellite_access_csv_name[19:].split("_")[1][:-1])
+        config = self.on_fit_config_fn(1)
+        gs = config["gs_locations"][1:-1].split(",")
+        self.factor_s = og_s / int(config["n_sat_in_cluster"])
+        self.factor_c = og_c / int(config["n_cluster"])
+        # choose only satellites that we want
+        self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
         self.satellite_client_list = []
     
     def configure_fit(
@@ -56,29 +68,33 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             config = self.on_fit_config_fn(server_round)
         fit_ins = FitIns(parameters, config)
         
-        start_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
+        # start_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
         start_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
 
         delta = timedelta(hours=2)
         client_list = np.zeros(int(config["clients"]))
-        
-        # Check if I need this later
-        n_s = int(self.satellite_access_csv_name[19:].split("_")[0][:-1])
-        n_c = int(self.satellite_access_csv_name[19:].split("_")[1][:-1])
-        config["n_cluster"]
-        config["n_sat_in_cluster"]
+        client_time_list = np.zeros(int(config["clients"]))
         
         while sum(client_list) < (int(config["clients"]))*2:
-            satellite_id = ((self.satellite_access_csv['cluster_num'].iloc[self.counter])-1)
-            if client_list[satellite_id] < 2:
-                client_list[satellite_id] += 1
-            self.counter +=1
+            cluster_id = ((self.satellite_access_csv['cluster_num'].iloc[self.counter]))
+            satellite_id = ((self.satellite_access_csv['sat_num'].iloc[self.counter]))
+            client_id = int(int(config["n_sat_in_cluster"])*(cluster_id/self.factor_c)-(int(config["n_sat_in_cluster"])-(satellite_id/self.factor_s))-1)
+            if client_list[client_id] < 2:
+                client_list[client_id] += 1
+                if client_time_list[client_id] == 0 :
+                    client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
+                else:
+                    client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter] - client_time_list[client_id]
+            self.counter += 1
 
-        stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
+        # stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
         stop_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
+        idle_time_total = 0
+        for time in client_time_list:
+            idle_time_total += (stop_time_sec - start_time_sec)-time 
+        idle_time_avg = idle_time_total/int(config["clients"])
+        wandb.log({"start_time_sec": start_time_sec, "stop_time_sec": stop_time_sec, "server_round": server_round,"duration" : stop_time_sec - start_time_sec, "idle_time_total": idle_time_total,"idle_time_avg": idle_time_avg})
 
-        wandb.log({"start_time": start_time,"start_time_sec": start_time_sec, "stop_time": stop_time, "stop_time_sec": stop_time_sec, "server_round": server_round,"duration" : stop_time_sec - start_time_sec})
-        
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(

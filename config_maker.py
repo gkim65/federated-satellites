@@ -11,15 +11,17 @@ config_object = ConfigParser()
 #####  Put the specific variables you want to test in a list   #####
 ####################################################################
 variable_name = "wait_time"
-# test_cases = [4,8,16,32,64]
-# rounds = [50,40,25,15,9]
-
-n_sat_c = 1
+epochs = [5,10,25,50,100]
+sats = [1,5,10,15,25,50]
+cluster = [1,5,10,15,25]
+# ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
+gs_list = ["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
+n_sat_c = 2
 n_c = 5
 
 config_object["TEST_CONFIG"] = {
-        "name": "fedavgsats_9_5",
-        "round": 10,
+        "name": "fed_avg_NEWTESTS",
+        "round": 500,
         "epochs": 3,
         "trial": 5,
         "clients": n_sat_c*n_c,
@@ -27,14 +29,20 @@ config_object["TEST_CONFIG"] = {
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
-        "sim_fname" : "Strategies/csv_stk/1s_5c_us.csv",
+        "sim_fname" : "Strategies/csv_stk/50s_25c_smaller_us.csv",
         "n_sat_in_cluster" : n_sat_c,
         "n_cluster" : n_c,
-        "gs_locations" : "us"
+        "gs_locations" : "[Boston,]"
     }
 
 # for test,round in zip(test_cases,rounds):
-for test,round in zip([10],[10]):
+epochs = [5,10,25,50,100]
+sats = [1,5,10,15,25,50]
+cluster = [1,5,10,15,25]
+# ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
+gs_list = ["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
+
+for test,round in zip(epochs,sats,cluster):
     #Write the above sections to config.ini file
     config_object["TEST_CONFIG"][variable_name] = str(test)
 
