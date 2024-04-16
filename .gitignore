@@ -8,3 +8,4 @@ FEMNIST_tests/femnist.tar.gzhqw_t35qtmp
 *.out
 *.csv
 *.DS_Store
+Strategies/csv_stk/data_org_pipeline.ipynb
