@@ -20,34 +20,34 @@ import os
 import wandb
 
 
-class Strategy_Sat(FedAvgSat):
-    def aggregate_evaluate(
-        self,
-        server_round: int,
-        results: List[Tuple[ClientProxy, EvaluateRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-        ) -> Tuple[Optional[float], Dict[str, Scalar]]:
-        """Aggregate evaluation accuracy using weighted average."""
+# class Strategy_Sat(FedAvgSat):
+#     def aggregate_evaluate(
+#         self,
+#         server_round: int,
+#         results: List[Tuple[ClientProxy, EvaluateRes]],
+#         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+#         ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+#         """Aggregate evaluation accuracy using weighted average."""
 
-        if not results:
-            return None, {}
+#         if not results:
+#             return None, {}
 
-        # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
-        aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
+#         # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
+#         aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
 
-        # Weigh accuracy of each client by number of examples used
-        accuracies = [r.metrics["accuracy"] * r.num_examples for _, r in results]
-        examples = [r.num_examples for _, r in results]
+#         # Weigh accuracy of each client by number of examples used
+#         accuracies = [r.metrics["accuracy"] * r.num_examples for _, r in results]
+#         examples = [r.num_examples for _, r in results]
 
-        # Aggregate and print custom metric
-        aggregated_accuracy = sum(accuracies) / sum(examples)
-        print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
+#         # Aggregate and print custom metric
+#         aggregated_accuracy = sum(accuracies) / sum(examples)
+#         print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
         
-        # log metrics to wandb
-        run.log({"acc": aggregated_accuracy, "loss": aggregated_loss})
+#         # log metrics to wandb
+#         run.log({"acc": aggregated_accuracy, "loss": aggregated_loss})
         
-        # Return aggregated loss and metrics (i.e., aggregated accuracy)
-        return aggregated_loss, {"accuracy": aggregated_accuracy}
+#         # Return aggregated loss and metrics (i.e., aggregated accuracy)
+#         return aggregated_loss, {"accuracy": aggregated_accuracy}
 
 
 # #############################################################################
@@ -70,7 +70,7 @@ for file_name in os.listdir("config_files"):
             t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
         
         ### Saving to Weights and Biases
-        run = wandb.init(
+        wandb.init(
             # set the wandb project where this run will be logged
             project=t_name,
             # track hyperparameters and run metadata
@@ -92,16 +92,18 @@ for file_name in os.listdir("config_files"):
             config = config_object["TEST_CONFIG"]
             return config
 
+        strat = FedAvgSat
         results = fl.simulation.start_simulation(
             num_clients= int(config_object["TEST_CONFIG"]["clients"]),
             clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
             client_fn=client_fn,
             config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
-            strategy=Strategy_Sat(
+            strategy=FedAvgSat(
                 on_fit_config_fn=fit_config, 
                 satellite_access_csv = "Strategies/csv_stk/Chain1_Access_Data_9sat_5plane.csv",
                 time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
-            )
+                )
+                
         )
 
         # losses_distributed = pd.DataFrame.from_dict({"test": [acc for _, acc in results.losses_distributed]})
@@ -112,5 +114,5 @@ for file_name in os.listdir("config_files"):
         # accuracies_distributed.to_csv('results/'+t_name+"/accuracies_distributed.csv")
         ray.shutdown()
         gc.collect()
-        run.finish()
+        wandb.finish()
 
