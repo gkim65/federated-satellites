@@ -11,15 +11,9 @@ config_object = ConfigParser()
 #####  Put the specific variables you want to test in a list   #####
 ####################################################################
 variable_name = "wait_time"
-<<<<<<< HEAD
 epochs = [10] #[5,10,25,50,100]
 sats = [1]#[1,2,4,5,10] #[1,2,5,10,25,50]
 clusters = [2]#[1,2,4,5,10] #[1,5,25]
-=======
-epochs = [10]#[5,10,25,50,100]
-sats = [2]#[1,2,5,10,25,50]
-clusters = [1]#[1,5,25]
->>>>>>> c0597ccb7c69110f8e836b8d4af7f5b5fb40108f
 # ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
 # [Fairbanks,Alice_Springs,]
 # "[Sioux_Falls]"
