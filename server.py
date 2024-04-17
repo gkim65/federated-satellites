@@ -32,7 +32,8 @@ for file_name in os.listdir("config_files"):
     config_object.read("config_files/"+file_name)
 
     if not os.path.exists(config_object["TEST_CONFIG"]["sim_fname"]):
-        url = "https://drive.google.com/file/d/1zEiHCmMmx_qz17nSmrDzgqHlheYTbsvF/view?usp=sharing"
+        # url = "https://drive.google.com/file/d/1zEiHCmMmx_qz17nSmrDzgqHlheYTbsvF/view?usp=sharing"
+        url = "https://drive.google.com/file/d/1pjv5q1NZAY-sqN4gFHQmjVwyLPBIkGfj/view?usp=sharing"
         gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
     
     # making sure to run multiple trials for each run
@@ -42,7 +43,7 @@ for file_name in os.listdir("config_files"):
         t_name = "Run"
         for keys in config_object["TEST_CONFIG"].keys():
             print(keys)
-            if keys != "sim_fname":
+            if keys != "sim_fname" and keys != "gs_locations":
                 t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
         
         ### Saving to Weights and Biases
