@@ -1,7 +1,10 @@
-#!/bin/zsh
-#SBATCH --cpus-per-task 12
+#!/bin/bash
+#SBATCH --cpus-per-task 4
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=grace_practice
+#SBATCH --partition=normal
+#SBATCH --tasks-per-node=1
+#SBATCH --mem=100G
 
 source /nfs-share/grk27/miniconda3/bin/activate fed_sats
 
