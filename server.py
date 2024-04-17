@@ -33,7 +33,7 @@ for file_name in os.listdir("config_files"):
 
     if not os.path.exists(config_object["TEST_CONFIG"]["sim_fname"]):
         # url = "https://drive.google.com/file/d/1zEiHCmMmx_qz17nSmrDzgqHlheYTbsvF/view?usp=sharing"
-        url = "https://drive.google.com/file/d/1pjv5q1NZAY-sqN4gFHQmjVwyLPBIkGfj/view?usp=sharing"
+        url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
         gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
     
     # making sure to run multiple trials for each run
