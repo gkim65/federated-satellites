@@ -12,8 +12,8 @@ config_object = ConfigParser()
 ####################################################################
 variable_name = "wait_time"
 epochs = [5,10,25,50,100]
-sats = [1,5,10,15,25,50]
-cluster = [1,5,10,15,25]
+sats = [1,2,5,10,25,50]
+clusters = [1,5,25]
 # ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
 gs_list = ["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
 n_sat_c = 2
@@ -35,18 +35,21 @@ config_object["TEST_CONFIG"] = {
         "gs_locations" : "[Boston,]"
     }
 
-# for test,round in zip(test_cases,rounds):
-epochs = [5,10,25,50,100]
-sats = [1,5,10,15,25,50]
-cluster = [1,5,10,15,25]
-# ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
-gs_list = ["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
+test_num = 0
+for epoch in epochs:
+    for sat in sats:
+        for cluster in clusters:
+            for gs in gs_list:
 
-for test,round in zip(epochs,sats,cluster):
-    #Write the above sections to config.ini file
-    config_object["TEST_CONFIG"][variable_name] = str(test)
+                # Change all of the configs
+                config_object["TEST_CONFIG"]["epochs"] = str(epoch)
+                config_object["TEST_CONFIG"]["n_sat_in_cluster"] = str(sat)
+                config_object["TEST_CONFIG"]["clients"] = str(sat*cluster)
+                config_object["TEST_CONFIG"]["n_cluster"] = str(cluster)
+                config_object["TEST_CONFIG"]["gs_locations"] = gs
 
-    config_object["TEST_CONFIG"]["round"] = str(round)
-    with open('config_files/config_'+str(test)+'.ini', 'w') as conf:
-        config_object.write(conf)
+                #Write the above sections to config.ini file
+                with open('config_files/config_'+str(test_num)+'.ini', 'w') as conf:
+                    config_object.write(conf)
+                test_num +=1
 
