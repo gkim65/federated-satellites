@@ -12,8 +12,8 @@ config_object = ConfigParser()
 ####################################################################
 variable_name = "wait_time"
 epochs = [10] #[5,10,25,50,100]
-sats = [1]#[1,2,4,5,10] #[1,2,5,10,25,50]
-clusters = [2]#[1,2,4,5,10] #[1,5,25]
+sats = [1,2,5,10] #[1,2,5,10,25,50]
+clusters = [1,2,5,10] #[1,5,25]
 # ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
 # [Fairbanks,Alice_Springs,]
 # "[Sioux_Falls]"
@@ -30,7 +30,7 @@ gs_list = ["[Sioux_Falls]",
 "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso]",
 "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs]",
 "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]"]
-gs_list = ["[Sioux_Falls,Sanya]"]
+gs_list = ["[Sioux_Falls]",]
 n_sat_c = 2
 n_c = 25
 
