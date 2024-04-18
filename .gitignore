@@ -2,10 +2,11 @@
 */femnist
 FEMNIST_tests/femnist.tar.gz
 FEMNIST_tests/femnist.tar.gzhqw_t35qtmp
-*config_files
+*config_files*
 *wandb
 *__pycache__
 *.out
 *.csv
 *.DS_Store
 Strategies/csv_stk/data_org_pipeline.ipynb
+

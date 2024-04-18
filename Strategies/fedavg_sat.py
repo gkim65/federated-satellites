@@ -75,16 +75,24 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         client_list = np.zeros(int(config["clients"]))
         client_time_list = np.zeros(int(config["clients"]))
         
-        while sum(client_list) < (int(config["clients"]))*2:
+        if int(config["clients"]) < int(config["client_limit"]):
+            limit = int(config["clients"])
+        else:
+            limit = int(config["client_limit"])
+        done_count = 0
+        client_twice = []
+        while done_count < limit:
             cluster_id = ((self.satellite_access_csv['cluster_num'].iloc[self.counter]))
             satellite_id = ((self.satellite_access_csv['sat_num'].iloc[self.counter]))
             client_id = int(int(config["n_sat_in_cluster"])*(cluster_id/self.factor_c)-(int(config["n_sat_in_cluster"])-(satellite_id/self.factor_s))-1)
-            if client_list[client_id] < 2:
-                client_list[client_id] += 1
-                if client_time_list[client_id] == 0 :
-                    client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
-                else:
-                    client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter] - client_time_list[client_id]
+            client_list[client_id] += 1
+            if client_list[client_id] == 2:
+                done_count +=1
+                client_twice.append(client_id)
+            if client_time_list[client_id] == 0 :
+                client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
+            else:
+                client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter] - client_time_list[client_id]
             self.counter += 1
 
         # stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
@@ -105,9 +113,11 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             num_clients=sample_size, min_num_clients=min_num_clients
         )
 
+        x = [client for client in clients if int(client.cid) in client_twice]
+        print(x)
         self.satellite_client_list = [int(client.cid) for client in clients]
         # Return client/config pairs
-        return [(client, fit_ins) for client in clients]
+        return [(client, fit_ins) for client in x]
     
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager

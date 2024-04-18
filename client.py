@@ -100,7 +100,6 @@ class FlowerClient(fl.client.NumPyClient):
         self.trainloader = trainloader
         self.testloader = testloader
 
-
   def get_parameters(self, config):
     return [val.cpu().numpy() for _, val in self.net.state_dict().items()]
 
@@ -122,6 +121,15 @@ class FlowerClient(fl.client.NumPyClient):
 def client_fn(cid: int) -> FlowerClient:
     # Load model and data
     print("MADE CLIENT")
+    if torch.cuda.is_available():
+        print ("GPU CUDA")
+        DEVICE = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        print ("MPS device")
+        DEVICE = torch.device("mps")
+    else:
+        print ("MPS device not found, using CPU")
+        DEVICE = torch.device("cpu")
 
     # TODO: need to find a way to fix this, how to switch specific datasets
     if True:

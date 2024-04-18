@@ -56,6 +56,7 @@ for file_name in os.listdir("config_files"):
                 "epochs": config_object["TEST_CONFIG"]["epochs"],
                 "trial": config_object["TEST_CONFIG"]["trial"],
                 "clients": config_object["TEST_CONFIG"]["clients"],
+                "client_limit": config_object["TEST_CONFIG"]["client_limit"],
                 "dataset": config_object["TEST_CONFIG"]["dataset"],
                 "learning_rate": config_object["TEST_CONFIG"]["learning_rate"],
                 "momentum": config_object["TEST_CONFIG"]["momentum"],
@@ -73,6 +74,7 @@ for file_name in os.listdir("config_files"):
             return config
 
         try:
+            my_client_resources = {'num_cpus': 1, 'num_gpus': 0.1}
             results = fl.simulation.start_simulation(
                 num_clients= int(config_object["TEST_CONFIG"]["clients"]),
                 clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
@@ -82,7 +84,8 @@ for file_name in os.listdir("config_files"):
                     on_fit_config_fn=fit_config, 
                     satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
                     time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
-                    )
+                    ),
+                client_resources = my_client_resources 
                     
             )
         except:
