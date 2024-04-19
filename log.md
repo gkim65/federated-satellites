@@ -3,6 +3,15 @@
 ### Current Implementations
 
 
+**April 17-19 2024**
+My god trying to understand and not mess up slrum test runs have been a nightmare...
+But I think I finally got to a place where tests are running relatively smoothly?
+
+Todos however:
+- need to check how to fix the idle time and the idle average
+- is my thing actually fed avg? or a type of fed prox? please check
+    - Okay I checked, I just did a slightly more efficient method of fedAvg, might need to make fedAvg worse and change it for the future
+
 **April 12-16 2024**
 
 Many things have happened over the past few days

@@ -31,7 +31,7 @@ import pandas as pd
 import ray
 import gc
 
-class FedAvgSat(fl.server.strategy.FedAvg):
+class FedAvg2Sat(fl.server.strategy.FedAvg):
     def __init__(
         self,
         *,
@@ -85,18 +85,15 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             cluster_id = ((self.satellite_access_csv['cluster_num'].iloc[self.counter]))
             satellite_id = ((self.satellite_access_csv['sat_num'].iloc[self.counter]))
             client_id = int(int(config["n_sat_in_cluster"])*(cluster_id/self.factor_c)-(int(config["n_sat_in_cluster"])-(satellite_id/self.factor_s))-1)
-            if client_list[client_id] == 0 and len(client_twice) < limit:
-                client_twice.append(client_id)
-                client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
             client_list[client_id] += 1
-            if client_list[client_id] == 2 and (client_id in client_twice):
+            if client_list[client_id] == 2:
                 done_count +=1
+                client_twice.append(client_id)
+            if client_time_list[client_id] == 0 :
+                client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
+            else:
                 client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter] - client_time_list[client_id]
             self.counter += 1
-        print(client_list)
-        print(client_twice)
-        print(client_time_list)
-
 
         # stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
         stop_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
