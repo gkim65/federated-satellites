@@ -98,9 +98,12 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         # stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
         stop_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
         idle_time_total = 0
+        # print(client_time_list)
+        client_time_list = [client_time_list[x] for x in range(len(client_time_list)) if x in client_twice]
+        # print(client_time_list)
         for time in client_time_list:
             idle_time_total += (stop_time_sec - start_time_sec)-time 
-        idle_time_avg = idle_time_total/int(config["clients"])
+        idle_time_avg = idle_time_total/int(config["client_limit"])
         wandb.log({"start_time_sec": start_time_sec, "stop_time_sec": stop_time_sec, "server_round": server_round,"duration" : stop_time_sec - start_time_sec, "idle_time_total": idle_time_total,"idle_time_avg": idle_time_avg})
 
 

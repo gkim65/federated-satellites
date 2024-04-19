@@ -28,6 +28,7 @@ gs_list = ["[Sioux_Falls]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]"]
 # gs_list = ["[Sioux_Falls]",]
+name = ["1_gs","2_gs","3_gs","5_gs","10_gs","all_gs"]
 n_sat_c = 2
 n_c = 25
 
@@ -37,7 +38,7 @@ config_object = ConfigParser()
 
 config_object["TEST_CONFIG"] = {
         "name": "FIRST_fa",
-        "round": 200,
+        "round": 300,
         "epochs": 3,
         "trial": 5,
         "clients": n_sat_c*n_c,
@@ -55,7 +56,7 @@ config_object["TEST_CONFIG"] = {
 ### SAVE INTO DIFFERENT FILES:
 
 folder_num = 0
-for gs in gs_list:
+for gs,name_list in zip(gs_list,name):
 
     if not os.path.exists("config_files"+str(folder_num)):
         os.makedirs("config_files"+str(folder_num))
@@ -89,7 +90,7 @@ for gs in gs_list:
                 config_object["TEST_CONFIG"]["clients"] = str(sat*cluster)
                 config_object["TEST_CONFIG"]["n_cluster"] = str(cluster)
                 config_object["TEST_CONFIG"]["gs_locations"] = gs
-
+                config_object["TEST_CONFIG"]["name"] = name_list
                 #Write the above sections to config.ini file
                 with open('config_files'+str(folder_num)+'/config_'+str(test_num)+'.ini', 'w') as conf:
                     config_object.write(conf)

@@ -74,7 +74,7 @@ for file_name in os.listdir("config_files"):
             return config
 
         try:
-            my_client_resources = {'num_cpus': 1, 'num_gpus': 0.1}
+            my_client_resources = {'num_cpus': 2, 'num_gpus': 0}
             results = fl.simulation.start_simulation(
                 num_clients= int(config_object["TEST_CONFIG"]["clients"]),
                 clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],

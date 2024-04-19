@@ -9,4 +9,9 @@ FEMNIST_tests/femnist.tar.gzhqw_t35qtmp
 *.csv
 *.DS_Store
 Strategies/csv_stk/data_org_pipeline.ipynb
+*old_slurms
+*slrum*
+*server*
+!slrum_fed_sats.sh
+!server.py
 
