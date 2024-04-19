@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --cpus-per-task 10
+#SBATCH --cpus-per-task 20
 #SBATCH --gres=gpu:0
 #SBATCH --job-name=grace_practice
 #SBATCH --partition=normal

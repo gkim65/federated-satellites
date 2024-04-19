@@ -12,7 +12,7 @@ from flwr.common import (
 import numpy as np
 import pandas as pd
 
-from Strategies.fedavg_sat import FedAvgSat
+from Strategies.fedsat_gen import FedSatGen
 
 from configparser import ConfigParser
 import os
@@ -31,16 +31,17 @@ for file_name in os.listdir("config_files"):
     config_object = ConfigParser()
     config_object.read("config_files/"+file_name)
 
-    if not os.path.exists(config_object["TEST_CONFIG"]["sim_fname"]):
-        # url = "https://drive.google.com/file/d/1zEiHCmMmx_qz17nSmrDzgqHlheYTbsvF/view?usp=sharing"
-        url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
-        gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
+    # TODO: Bring back in the future but for now accessing from the datasets
+    # if not os.path.exists(config_object["TEST_CONFIG"]["sim_fname"]):
+    #     # url = "https://drive.google.com/file/d/1zEiHCmMmx_qz17nSmrDzgqHlheYTbsvF/view?usp=sharing"
+    #     url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
+    #     gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
     
     # making sure to run multiple trials for each run
     for i in range(int(config_object["TEST_CONFIG"]["trial"])):
 
         # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
-        t_name = "Run"
+        t_name = "Apr_19"
         for keys in config_object["TEST_CONFIG"].keys():
             print(keys)
             if keys != "sim_fname" and keys != "gs_locations":
@@ -58,6 +59,7 @@ for file_name in os.listdir("config_files"):
                 "clients": config_object["TEST_CONFIG"]["clients"],
                 "client_limit": config_object["TEST_CONFIG"]["client_limit"],
                 "dataset": config_object["TEST_CONFIG"]["dataset"],
+                "alg": config_object["TEST_CONFIG"]["alg"],
                 "learning_rate": config_object["TEST_CONFIG"]["learning_rate"],
                 "momentum": config_object["TEST_CONFIG"]["momentum"],
                 "wait_time" : config_object["TEST_CONFIG"]["wait_time"],
@@ -72,7 +74,7 @@ for file_name in os.listdir("config_files"):
         def fit_config(server_round: int):  
             config = config_object["TEST_CONFIG"]
             return config
-
+    
         try:
             my_client_resources = {'num_cpus': 2, 'num_gpus': 0}
             results = fl.simulation.start_simulation(
@@ -80,7 +82,8 @@ for file_name in os.listdir("config_files"):
                 clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
                 client_fn=client_fn,
                 config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
-                strategy=FedAvgSat(
+                
+                strategy=FedSatGen(
                     on_fit_config_fn=fit_config, 
                     satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
                     time_wait = int(config_object["TEST_CONFIG"]["wait_time"])

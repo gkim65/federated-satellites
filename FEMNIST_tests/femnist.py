@@ -59,10 +59,12 @@ class FemnistDataset(Dataset):
             target_transform (Optional[Callable[[int], Any]], optional):
                     transform function to be applied to the label.
         """
-        self.data_dir = Path('FEMNIST_tests/femnist/data')
+        # TODO: find ways to make this not changed for my mac
+        self.data_dir = Path('/datasets/femnist/data') #Path('FEMNIST_tests/femnist/data')
         self.client = client
-        self.mapping_dir = Path('FEMNIST_tests/femnist/client_data_mappings/fed_natural')
+        self.mapping_dir = Path('/datasets/femnist/client_data_mappings/fed_natural') #Path('FEMNIST_tests/femnist/client_data_mappings/fed_natural')
         self.split = split
+
 
         self.data: Sequence[tuple[str, int]] = self._load_dataset()
         self.transform: Callable[[ImageType], Any] | None = transform

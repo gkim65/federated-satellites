@@ -13,6 +13,7 @@ from torchvision.datasets import CIFAR10
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 # Femnist specific
 from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST
 
@@ -119,6 +120,7 @@ class FlowerClient(fl.client.NumPyClient):
     return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
 
 def client_fn(cid: int) -> FlowerClient:
+
     # Load model and data
     print("MADE CLIENT")
     if torch.cuda.is_available():
@@ -130,12 +132,10 @@ def client_fn(cid: int) -> FlowerClient:
     else:
         print ("MPS device not found, using CPU")
         DEVICE = torch.device("cpu")
-
+        
     # TODO: need to find a way to fix this, how to switch specific datasets
-    if True:
-        net = FemnistNet().to(DEVICE)
-        trainloader, testloader = load_FEMNIST(cid)
-
-    # train_loader = train_loaders[int(cid)]
-    # val_loader = val_loaders[int(cid)]
+    # if config_object["TEST_CONFIG"]["dataset"] == "FEMNIST":
+    net = FemnistNet().to(DEVICE)
+    trainloader, testloader = load_FEMNIST(cid)
+    
     return FlowerClient(cid, net, trainloader, testloader).to_client()

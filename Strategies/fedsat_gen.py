@@ -22,16 +22,16 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from Strategies.utils import choose_sat_csv
-from datetime import timedelta
-from datetime import datetime
-import wandb
+from Strategies.utils import choose_sat_csv, fedAvgSat
+
+# TODO: Check if i can delete these:
 import numpy as np
 import pandas as pd
 import ray
 import gc
+import wandb
 
-class FedAvgSat(fl.server.strategy.FedAvg):
+class FedSatGen(fl.server.strategy.FedAvg):
     def __init__(
         self,
         *,
@@ -69,47 +69,6 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             config = self.on_fit_config_fn(server_round)
         fit_ins = FitIns(parameters, config)
         
-        # start_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
-        start_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
-
-        client_list = np.zeros(int(config["clients"]))
-        client_time_list = np.zeros(int(config["clients"]))
-        
-        if int(config["clients"]) < int(config["client_limit"]):
-            limit = int(config["clients"])
-        else:
-            limit = int(config["client_limit"])
-        done_count = 0
-        client_twice = []
-        while done_count < limit:
-            cluster_id = ((self.satellite_access_csv['cluster_num'].iloc[self.counter]))
-            satellite_id = ((self.satellite_access_csv['sat_num'].iloc[self.counter]))
-            client_id = int(int(config["n_sat_in_cluster"])*(cluster_id/self.factor_c)-(int(config["n_sat_in_cluster"])-(satellite_id/self.factor_s))-1)
-            if client_list[client_id] == 0 and len(client_twice) < limit:
-                client_twice.append(client_id)
-                client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
-            client_list[client_id] += 1
-            if client_list[client_id] == 2 and (client_id in client_twice):
-                done_count +=1
-                client_time_list[client_id] = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter] - client_time_list[client_id]
-            self.counter += 1
-        print(client_list)
-        print(client_twice)
-        print(client_time_list)
-
-
-        # stop_time = self.satellite_access_csv['Start Time (UTCG)'].iloc[self.counter]
-        stop_time_sec = self.satellite_access_csv['Start Time Seconds Cumulative'].iloc[self.counter]
-        idle_time_total = 0
-        # print(client_time_list)
-        client_time_list = [client_time_list[x] for x in range(len(client_time_list)) if x in client_twice]
-        # print(client_time_list)
-        for time in client_time_list:
-            idle_time_total += (stop_time_sec - start_time_sec)-time 
-        idle_time_avg = idle_time_total/int(config["client_limit"])
-        wandb.log({"start_time_sec": start_time_sec, "stop_time_sec": stop_time_sec, "server_round": server_round,"duration" : stop_time_sec - start_time_sec, "idle_time_total": idle_time_total,"idle_time_avg": idle_time_avg})
-
-
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()
@@ -119,11 +78,18 @@ class FedAvgSat(fl.server.strategy.FedAvg):
             num_clients=sample_size, min_num_clients=min_num_clients
         )
 
-        x = [client for client in clients if int(client.cid) in client_twice]
-        print(x)
-        self.satellite_client_list = [int(client.cid) for client in x]
-        # Return client/config pairs
-        return [(client, fit_ins) for client in x]
+        if config["alg"] == "fedAvgSat":
+            chosen_clients, self.counter = fedAvgSat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+            
+        return [(client, fit_ins) for client in chosen_clients]
     
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -135,9 +101,16 @@ class FedAvgSat(fl.server.strategy.FedAvg):
 
         # Parameters and config
         config = {}
+
+        # using the previous config but usually this:
+        """
         if self.on_evaluate_config_fn is not None:
             # Custom evaluation config function provided
             config = self.on_evaluate_config_fn(server_round)
+        """
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
         evaluate_ins = EvaluateIns(parameters, config)
 
         # Sample clients
@@ -147,10 +120,20 @@ class FedAvgSat(fl.server.strategy.FedAvg):
         clients = client_manager.sample(
             num_clients=sample_size, min_num_clients=min_num_clients
         )
-        # Return client/config pairs
 
-        x = [client for client in clients if int(client.cid) in self.satellite_client_list]
-        return [(client, evaluate_ins) for client in x]
+        if config["alg"] == "fedAvgSat":
+            chosen_clients, self.counter = fedAvgSat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+            
+        # Return client/config pairs
+        return [(client, evaluate_ins) for client in chosen_clients]
 
     def aggregate_evaluate(
         self,

@@ -29,6 +29,7 @@ gs_list = ["[Sioux_Falls]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]"]
 # gs_list = ["[Sioux_Falls]",]
 name = ["1_gs","2_gs","3_gs","5_gs","10_gs","all_gs"]
+# name = ["1_gs"]
 n_sat_c = 2
 n_c = 25
 
@@ -37,17 +38,18 @@ n_c = 25
 config_object = ConfigParser()
 
 config_object["TEST_CONFIG"] = {
-        "name": "FIRST_fa",
-        "round": 300,
+        "name": "Pls",
+        "round": 500,
         "epochs": 3,
         "trial": 5,
         "clients": n_sat_c*n_c,
         "client_limit": 10,
         "dataset": "FEMNIST",
+        "alg": "fedAvgSat",
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
-        "sim_fname" : "Strategies/csv_stk/10s_10c_s_landsat.csv",
+        "sim_fname" : "/datasets/landsat/10s_10c_s_landsat.csv",
         "n_sat_in_cluster" : n_sat_c,
         "n_cluster" : n_c,
         "gs_locations" : "[Boston,]"
