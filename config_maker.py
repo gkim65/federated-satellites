@@ -45,7 +45,7 @@ config_object["TEST_CONFIG"] = {
         "clients": n_sat_c*n_c,
         "client_limit": 10,
         "dataset": "FEMNIST",
-        "alg": "fedAvgSat",
+        "alg": "fedAvg2Sat",
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
@@ -57,7 +57,7 @@ config_object["TEST_CONFIG"] = {
 
 ### SAVE INTO DIFFERENT FILES:
 
-folder_num = 0
+folder_num = 6
 for gs,name_list in zip(gs_list,name):
 
     if not os.path.exists("config_files"+str(folder_num)):

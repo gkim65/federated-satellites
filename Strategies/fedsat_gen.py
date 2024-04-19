@@ -22,13 +22,9 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from Strategies.utils import choose_sat_csv, fedAvgSat
+from Strategies.utils import choose_sat_csv, fedAvgSat, fedAvg2Sat
 
-# TODO: Check if i can delete these:
-import numpy as np
 import pandas as pd
-import ray
-import gc
 import wandb
 
 class FedSatGen(fl.server.strategy.FedAvg):
@@ -88,6 +84,16 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_c,
                                        server_round,
                                        clients)
+        elif config["alg"] == "fedAvg2Sat":
+            chosen_clients, self.counter = fedAvg2Sat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
             
         return [(client, fit_ins) for client in chosen_clients]
     
@@ -123,6 +129,16 @@ class FedSatGen(fl.server.strategy.FedAvg):
 
         if config["alg"] == "fedAvgSat":
             chosen_clients, self.counter = fedAvgSat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+        elif config["alg"] == "fedAvg2Sat":
+            chosen_clients, self.counter = fedAvg2Sat(self.satellite_access_csv, 
                                        self.counter,
                                        int(config["clients"]),
                                        int(config["client_limit"]),
