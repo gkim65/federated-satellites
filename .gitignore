@@ -13,5 +13,6 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 *slrum*
 *server*
 !slrum_fed_sats.sh
+!slrum_interact.sh
 !server.py
 
