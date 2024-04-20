@@ -57,6 +57,8 @@ config_object["TEST_CONFIG"] = {
 
 ### SAVE INTO DIFFERENT FILES:
 
+# TODO: delete 1 client test case in the future
+
 folder_num = 6
 for gs,name_list in zip(gs_list,name):
 
