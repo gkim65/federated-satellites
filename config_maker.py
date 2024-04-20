@@ -59,7 +59,7 @@ config_object["TEST_CONFIG"] = {
 
 # TODO: delete 1 client test case in the future
 
-folder_num = 6
+folder_num = 12
 for gs,name_list in zip(gs_list,name):
 
     if not os.path.exists("config_files"+str(folder_num)):
@@ -87,18 +87,20 @@ for gs,name_list in zip(gs_list,name):
     for epoch in epochs:
         for sat in sats:
             for cluster in clusters:
-
-                # Change all of the configs
-                config_object["TEST_CONFIG"]["epochs"] = str(epoch)
-                config_object["TEST_CONFIG"]["n_sat_in_cluster"] = str(sat)
-                config_object["TEST_CONFIG"]["clients"] = str(sat*cluster)
-                config_object["TEST_CONFIG"]["n_cluster"] = str(cluster)
-                config_object["TEST_CONFIG"]["gs_locations"] = gs
-                config_object["TEST_CONFIG"]["name"] = name_list
-                #Write the above sections to config.ini file
-                with open('config_files'+str(folder_num)+'/config_'+str(test_num)+'.ini', 'w') as conf:
-                    config_object.write(conf)
-                test_num +=1
+                if test_num != 0:
+                    # Change all of the configs
+                    config_object["TEST_CONFIG"]["epochs"] = str(epoch)
+                    config_object["TEST_CONFIG"]["n_sat_in_cluster"] = str(sat)
+                    config_object["TEST_CONFIG"]["clients"] = str(sat*cluster)
+                    config_object["TEST_CONFIG"]["n_cluster"] = str(cluster)
+                    config_object["TEST_CONFIG"]["gs_locations"] = gs
+                    config_object["TEST_CONFIG"]["name"] = name_list
+                    #Write the above sections to config.ini file
+                    with open('config_files'+str(folder_num)+'/config_'+str(test_num)+'.ini', 'w') as conf:
+                        config_object.write(conf)
+                    test_num +=1
+                else:
+                    test_num +=1
     folder_num +=1
 
 
