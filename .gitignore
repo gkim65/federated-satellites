@@ -16,3 +16,6 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 !slrum_interact.sh
 !server.py
 
+*.pkl
+
+
