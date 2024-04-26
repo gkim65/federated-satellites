@@ -22,7 +22,10 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from Strategies.utils import choose_sat_csv, fedAvgSat, fedAvg2Sat
+from Strategies.utils import choose_sat_csv 
+from Strategies.fedavg_sat import fedAvgSat
+from Strategies.fedavg2_sat import fedAvg2Sat
+from Strategies.fedprox_sat import fedProxSat
 
 import pandas as pd
 import wandb
@@ -41,11 +44,14 @@ class FedSatGen(fl.server.strategy.FedAvg):
         self.counter = 0
         self.time_wait = time_wait
         self.satellite_access_csv_name = satellite_access_csv
-        self.satellite_access_csv = pd.read_csv(satellite_access_csv)
+        try:
+            self.satellite_access_csv = pd.read_csv(satellite_access_csv)
+        except:
+            self.satellite_access_csv = pd.read_csv(".."+satellite_access_csv)
 
         # TODO: Change this it will keep causing index erros if you don't and switch the csv files
-        og_s = int(self.satellite_access_csv_name[18:].split("_")[0][:-1])
-        og_c = int(self.satellite_access_csv_name[18:].split("_")[1][:-1])
+        og_s = int(self.satellite_access_csv_name.split("/")[-1].split("_")[0][:-1])
+        og_c = int(self.satellite_access_csv_name.split("/")[-1].split("_")[1][:-1])
         config = self.on_fit_config_fn(1)
         gs = config["gs_locations"][1:-1].split(",")
         self.factor_s = og_s / int(config["n_sat_in_cluster"])
@@ -64,7 +70,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
         fit_ins = FitIns(parameters, config)
-        
+
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()
@@ -94,7 +100,22 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_c,
                                        server_round,
                                        clients)
-            
+        elif config["alg"] == "fedProxSat":
+            chosen_clients_times, self.counter = fedProxSat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                fit_ins.config["duration"] = str(time)
+                return_clients.append((client, fit_ins))
+            return return_clients
+
         return [(client, fit_ins) for client in chosen_clients]
     
     def configure_evaluate(
@@ -147,6 +168,21 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_c,
                                        server_round,
                                        clients)
+        elif config["alg"] == "fedProxSat":
+            chosen_clients_times, self.counter = fedProxSat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                evaluate_ins.config["duration"] = str(time)
+                return_clients.append((client, evaluate_ins))
+            return return_clients
             
         # Return client/config pairs
         return [(client, evaluate_ins) for client in chosen_clients]

@@ -41,10 +41,10 @@ for file_name in os.listdir("config_files"):
     for i in range(int(config_object["TEST_CONFIG"]["trial"])):
 
         # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
-        t_name = "Work2_4_19"
+        t_name = "tests" #"Work2_4_19"
         for keys in config_object["TEST_CONFIG"].keys():
             print(keys)
-            if keys != "sim_fname" and keys != "gs_locations":
+            if keys != "sim_fname" and keys != "gs_locations" and keys != "slrum"  and keys != "client_cpu"  and keys != "client_gpu":
                 t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
         
         ### Saving to Weights and Biases
@@ -66,6 +66,9 @@ for file_name in os.listdir("config_files"):
                 "sim_fname" : config_object["TEST_CONFIG"]["sim_fname"],
                 "n_sat_in_cluster" : config_object["TEST_CONFIG"]["n_sat_in_cluster"],
                 "n_cluster" : config_object["TEST_CONFIG"]["n_cluster"],
+                "slrum" : config_object["TEST_CONFIG"]["slrum"],
+                "client_cpu": config_object["TEST_CONFIG"]["client_cpu"],
+                "client_gpu": config_object["TEST_CONFIG"]["client_gpu"],
                 "gs_locations" : config_object["TEST_CONFIG"]["gs_locations"][1:-1].split(",")
             }
         )
@@ -75,26 +78,26 @@ for file_name in os.listdir("config_files"):
             config = config_object["TEST_CONFIG"]
             return config
     
-        try:
-            my_client_resources = {'num_cpus': 2, 'num_gpus': 0}
-            results = fl.simulation.start_simulation(
-                num_clients= int(config_object["TEST_CONFIG"]["clients"]),
-                clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
-                client_fn=client_fn,
-                config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
+        # try:
+        my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
+        results = fl.simulation.start_simulation(
+            num_clients= int(config_object["TEST_CONFIG"]["clients"]),
+            clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
+            client_fn=client_fn,
+            config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
+            
+            strategy=FedSatGen(
+                on_fit_config_fn=fit_config, 
+                satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
+                time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
+                ),
+            client_resources = my_client_resources 
                 
-                strategy=FedSatGen(
-                    on_fit_config_fn=fit_config, 
-                    satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
-                    time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
-                    ),
-                client_resources = my_client_resources 
-                    
-            )
-        except:
-            ray.shutdown()
-            gc.collect()
-            wandb.finish()
+        )
+        # except:
+        #     ray.shutdown()
+        #     gc.collect()
+        #     wandb.finish()
 
         ray.shutdown()
         gc.collect()

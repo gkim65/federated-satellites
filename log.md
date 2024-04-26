@@ -2,7 +2,10 @@
 
 ### Current Implementations
 
+**April 25 2024**
+Okay so I had done alot of things that made it difficult to run the github on my Mac but I have a temporary fix that lets me still use slurm in the process
 
+Also **TODO** make sure to change the femnist data loading and google drive data loading/downloading into the correct files for personal computers if you are starting from scratch
 **April 17-19 2024**
 My god trying to understand and not mess up slrum test runs have been a nightmare...
 But I think I finally got to a place where tests are running relatively smoothly?

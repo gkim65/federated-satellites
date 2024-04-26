@@ -83,8 +83,15 @@ class FemnistDataset(Dataset):
         sample_path, label = self.data[index]
 
         # Convert to the full path
-        full_sample_path: Path = self.data_dir / self.split / sample_path
-
+        try:
+            full_sample_path: Path = self.data_dir / self.split / sample_path
+            if not full_sample_path.exists():
+                raise ValueError(f"Required files do not exist, path: {full_sample_path}")
+        except:
+            self.data_dir = Path('../datasets/femnist/data')
+            full_sample_path: Path =  self.data_dir / self.split / sample_path
+            if not full_sample_path.exists():
+                raise ValueError(f"Required files do not exist, path: {full_sample_path}")
         img: ImageType = Image.open(full_sample_path).convert("L")
 
         if self.transform is not None:
@@ -119,13 +126,29 @@ class FemnistDataset(Dataset):
             Sequence[Tuple[str, int]]:
                 partition asked as a sequence of couples (path_to_file, label)
         """
-        preprocessed_path: Path = (self.mapping_dir / self.client / self.split).with_suffix(".pt")
+        try:
+            preprocessed_path: Path = (self.mapping_dir / self.client / self.split).with_suffix(".pt")
+            if not preprocessed_path.exists():
+                raise ValueError(f"Required files do not exist, path: {preprocessed_path}")
+        except:
+            self.mapping_dir = Path('../datasets/femnist/client_data_mappings/fed_natural')
+            preprocessed_path: Path = (self.mapping_dir / self.client / self.split).with_suffix(".pt")
+            if not preprocessed_path.exists():
+                raise ValueError(f"Required files do not exist, path: {preprocessed_path}")
+
         if preprocessed_path.exists():
             return torch.load(preprocessed_path)
         else:
-            csv_path = (self.mapping_dir / self.client / self.split).with_suffix(".csv")
-            if not csv_path.exists():
-                raise ValueError(f"Required files do not exist, path: {csv_path}")
+            try:
+                csv_path = (self.mapping_dir / self.client / self.split).with_suffix(".csv")
+                if not csv_path.exists():
+                    raise ValueError(f"Required files do not exist, path: {csv_path}")
+            except:
+                self.mapping_dir = Path('../datasets/femnist/client_data_mappings/fed_natural')
+                csv_path = (self.mapping_dir / self.client / self.split).with_suffix(".csv")
+                if not csv_path.exists():
+                    raise ValueError(f"Required files do not exist, path: {csv_path}")
+            
 
             with open(csv_path) as csv_file:
                 csv_reader = csv.reader(csv_file)

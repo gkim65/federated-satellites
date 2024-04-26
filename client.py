@@ -45,10 +45,15 @@ def train(net, trainloader, config, cid):
 
     criterion_mean = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
+    
+    if 'duration' in config:
+      total_epochs = int (float(config['duration']) / 60 / 5)
+    else:
+      total_epochs = int(config['epochs'])
 
+    print(total_epochs)
 
-
-    for epoch in range(int(config['epochs'])):
+    for epoch in range(total_epochs):
         print("Epoch: "+str(epoch))
         
         for images, labels in trainloader:
@@ -59,6 +64,23 @@ def train(net, trainloader, config, cid):
 
             criterion_mean(net(images), labels).backward()
             optimizer.step()
+            
+            ### FROM HERE:
+            # # Train the local model w/ our data, biased by the difference from the global model
+            # local_optimizer.zero_grad()
+
+            # # Update local model
+            # local_loss = criterion_mean(local_net(images), labels)
+            # local_loss.backward()
+            # for local_param, global_param in zip(local_net.parameters(), init_global_net.parameters()):
+            #     local_param.grad += config['lambda'] * (local_param - global_param)
+            # local_optimizer.step()
+
+            # # Update global model
+            # global_optimizer.zero_grad()
+            # global_loss = criterion_mean(global_net(images), labels)
+            # global_loss.backward()
+            # global_optimizer.step()
     
     # save_data(losses, images_passed, images_failed, config['test_name'], cid, DEVICE)
 
