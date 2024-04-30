@@ -41,11 +41,13 @@ else:
 def train(net, trainloader, config, cid):
     """Train the model on the training set."""
 
-    net.train() 
-
+    if config["alg"] == "fedProxSat":
+      global_params = [val.detach().clone() for val in net.parameters()]
+    
     criterion_mean = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
-    
+    net.train() 
+
     if 'duration' in config:
       total_epochs = int (float(config['duration']) / 60 / 5)
     else:
@@ -57,13 +59,20 @@ def train(net, trainloader, config, cid):
         print("Epoch: "+str(epoch))
         
         for images, labels in trainloader:
-            optimizer.zero_grad()
+          images = images.to(DEVICE)      # @ make sure to set images/labels to the device you're using
+          labels = labels.to(DEVICE)
+          optimizer.zero_grad()
 
-            images = images.to(DEVICE)      # @ make sure to set images/labels to the device you're using
-            labels = labels.to(DEVICE)
-
-            criterion_mean(net(images), labels).backward()
-            optimizer.step()
+          if config["alg"] == "fedProxSat":
+            proximal_mu = float(config["prox_term"])
+            proximal_term = 0
+            for local_weights, global_weights in zip(net.parameters(), global_params):
+              proximal_term += torch.square((local_weights - global_weights).norm(2))
+            loss = criterion_mean(net(images), labels) + (proximal_mu / 2) * proximal_term
+          else:
+            loss = criterion_mean(net(images), labels)
+          loss.backward()
+          optimizer.step()
             
             ### FROM HERE:
             # # Train the local model w/ our data, biased by the difference from the global model

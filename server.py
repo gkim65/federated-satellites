@@ -69,6 +69,7 @@ for file_name in os.listdir("config_files"):
                 "slrum" : config_object["TEST_CONFIG"]["slrum"],
                 "client_cpu": config_object["TEST_CONFIG"]["client_cpu"],
                 "client_gpu": config_object["TEST_CONFIG"]["client_gpu"],
+                "prox_term": config_object["TEST_CONFIG"]["prox_term"],
                 "gs_locations" : config_object["TEST_CONFIG"]["gs_locations"][1:-1].split(",")
             }
         )
