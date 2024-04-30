@@ -17,8 +17,8 @@ def search_and_replace(file_path, search_word, replace_word):
 
 variable_name = "wait_time"
 epochs = [10] #[5,10,25,50,100]
-sats = [5,5]#[1,2,5,10] #[1,2,5,10,25,50]
-clusters = [5]#[1,2,5,10] #[1,5,25]
+sats = [1,2,5,10] #[1,2,5,10,25,50]
+clusters = [1,2,5,10] #[1,5,25]
 # ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
 # gs_list = ["[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]#["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
 gs_list = ["[Sioux_Falls]",
@@ -27,9 +27,9 @@ gs_list = ["[Sioux_Falls]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]"]
-gs_list = ["[Sioux_Falls]",]
-# name = ["1_gs","2_gs","3_gs","5_gs","10_gs","all_gs"]
-name = ["1_gs"]
+# gs_list = ["[Sioux_Falls]",]
+name = ["1_gs","2_gs","3_gs","5_gs","10_gs","all_gs"]
+# name = ["1_gs"]
 n_sat_c = 2
 n_c = 25
 
@@ -45,7 +45,7 @@ config_object["TEST_CONFIG"] = {
         "clients": n_sat_c*n_c,
         "client_limit": 10,
         "dataset": "FEMNIST",
-        "alg": "fedAvg2Sat",
+        "alg": "fedProxSat",
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
@@ -53,14 +53,14 @@ config_object["TEST_CONFIG"] = {
         "n_sat_in_cluster" : n_sat_c,
         "n_cluster" : n_c,
         "slrum" : "y",
-        "client_cpu": 1,
-        "client_gpu": 0.2,
+        "client_cpu": 2,
+        "client_gpu": 0,
         "gs_locations" : "[Boston,]"
     }
 
 ### SAVE INTO DIFFERENT FILES:
 
-# TODO: delete 1 client test case in the future
+# NOTE: delete 1 client test case in the future
 
 folder_num = 0
 for gs,name_list in zip(gs_list,name):
