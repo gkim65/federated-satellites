@@ -2,6 +2,11 @@
 
 ### Current Implementations
 
+**May 3 2024**
+Something important to note that I think i need to fix in the future: maybe try to make the scheduling portion more modular and put in place like a quick function to add in? seems like that would be better than having multiple algorithms running cause it doesn't seem that useful having a separate script for every single case ...
+
+Also fed prox is very similar to fed avg just the last portion so maybe worth just changing that too idk more functions
+
 **April 25 2024**
 Okay so I had done alot of things that made it difficult to run the github on my Mac but I have a temporary fix that lets me still use slurm in the process
 

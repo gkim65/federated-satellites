@@ -1,9 +1,8 @@
 import numpy as np
 import wandb
+###################    FedProx2Sat   ########################
 
-###################    FedProxSat   ########################
-
-def fedProxSat(sat_df, 
+def fedProx2Sat(sat_df, 
               counter, 
               client_n, 
               client_max, 
@@ -41,21 +40,27 @@ def fedProxSat(sat_df,
         client_id = int(sat_n*(cluster_id/factor_c)-
                         (sat_n-(satellite_id/factor_s))-1)
 
-        # Track the first 10 satellites that make contact with a groundstation 
-        if client_list[client_id] == 0 and len(client_twice) < limit:
-            client_twice.append(client_id)
-            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
-        
         # Track every single pass of every client satellite
         client_list[client_id] += 1
 
-        # Track when the first 10 satellites that made contact reach back to a groundstation to give their information
-        if client_list[client_id] == 2 and (client_id in client_twice):
-            done_count +=1
-            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+        # just keep start time for all clients in case we want to use them
+        if client_time_list[client_id] == 0:
+            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
         
+        # Track the first 10 satellites that make contact twice with a groundstation 
+        if client_list[client_id] == 2 and len(client_twice) < limit:
+            client_twice.append(client_id)
+            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+            done_count +=1
+            
         # Going through the csv rows
         counter += 1
+
+    for id in range(client_n):
+        # Only track satellties as having been not idle if they trained this round
+        if id not in client_twice:
+            client_time_list[id] = 0
+    
 
     # TODO: Delete whenever i realize i know how to track this in wandb
     print(client_list)

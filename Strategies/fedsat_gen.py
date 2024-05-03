@@ -26,6 +26,7 @@ from Strategies.utils import choose_sat_csv
 from Strategies.fedavg_sat import fedAvgSat
 from Strategies.fedavg2_sat import fedAvg2Sat
 from Strategies.fedprox_sat import fedProxSat
+from Strategies.fedprox2_sat import fedProx2Sat
 
 import pandas as pd
 import wandb
@@ -115,6 +116,22 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 fit_ins.config["duration"] = str(time)
                 return_clients.append((client, fit_ins))
             return return_clients
+        
+        elif config["alg"] == "fedProx2Sat":
+            chosen_clients_times, self.counter = fedProx2Sat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                fit_ins.config["duration"] = str(time)
+                return_clients.append((client, fit_ins))
+            return return_clients
 
         return [(client, fit_ins) for client in chosen_clients]
     
@@ -170,6 +187,21 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        clients)
         elif config["alg"] == "fedProxSat":
             chosen_clients_times, self.counter = fedProxSat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                evaluate_ins.config["duration"] = str(time)
+                return_clients.append((client, evaluate_ins))
+            return return_clients
+        elif config["alg"] == "fedProx2Sat":
+            chosen_clients_times, self.counter = fedProx2Sat(self.satellite_access_csv, 
                                        self.counter,
                                        int(config["clients"]),
                                        int(config["client_limit"]),
