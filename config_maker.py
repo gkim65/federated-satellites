@@ -17,8 +17,8 @@ def search_and_replace(file_path, search_word, replace_word):
 
 variable_name = "wait_time"
 epochs = [10] #[5,10,25,50,100]
-sats = [5,5]#1,2,5,10] #[1,2,5,10,25,50]
-clusters = [5]#[1,2,5,10] #[1,5,25]
+sats = [1,2,5,10] #[1,2,5,10,25,50]
+clusters = [1,2,5,10] #[1,5,25]
 # ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
 # gs_list = ["[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]#["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
 gs_list = ["[Sioux_Falls]",
@@ -27,9 +27,9 @@ gs_list = ["[Sioux_Falls]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs]",
         "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]"]
-gs_list = ["[Sioux_Falls]",]
+# gs_list = ["[Sioux_Falls]",]
 name = ["1_gs","2_gs","3_gs","5_gs","10_gs","all_gs"]
-name = ["1_gs"]
+# name = ["1_gs"]
 n_sat_c = 2
 n_c = 25
 
@@ -55,7 +55,7 @@ config_object["TEST_CONFIG"] = {
         "slrum" : "y",
         "client_cpu": 2,
         "client_gpu": 0,
-        "prox_term": 0,
+        "prox_term": 2,
         "gs_locations" : "[Boston,]"
     }
 
@@ -63,7 +63,7 @@ config_object["TEST_CONFIG"] = {
 
 # NOTE: delete 1 client test case in the future
 
-folder_num = 0
+folder_num = 12
 for gs,name_list in zip(gs_list,name):
 
     if not os.path.exists("config_files"+str(folder_num)):
