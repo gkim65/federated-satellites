@@ -7,6 +7,8 @@ Something important to note that I think i need to fix in the future: maybe try 
 
 Also fed prox is very similar to fed avg just the last portion so maybe worth just changing that too idk more functions
 
+ALso learned at group meeting yesterday that fedprox is often implemented wrong because you need to know hwo heterogeneous the data is all teh time which is not the most feasible for most situations... may need to recheck my fedprox implementation
+
 **April 25 2024**
 Okay so I had done alot of things that made it difficult to run the github on my Mac but I have a temporary fix that lets me still use slurm in the process
 

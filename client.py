@@ -41,9 +41,6 @@ else:
 def train(net, trainloader, config, cid):
     """Train the model on the training set."""
 
-    if config["alg"] == "fedProxSat":
-      global_params = [val.detach().clone() for val in net.parameters()]
-    
     criterion_mean = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
     net.train() 
@@ -63,7 +60,8 @@ def train(net, trainloader, config, cid):
           labels = labels.to(DEVICE)
           optimizer.zero_grad()
 
-          if config["alg"] == "fedProxSat":
+          if config["alg"] == "fedProxSat" or config["alg"] == "fedProx2Sat":
+            global_params = [val.detach().clone() for val in net.parameters()]
             proximal_mu = float(config["prox_term"])
             proximal_term = 0
             for local_weights, global_weights in zip(net.parameters(), global_params):
