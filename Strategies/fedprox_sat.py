@@ -52,7 +52,7 @@ def fedProxSat(sat_df,
         # Track when the first 10 satellites that made contact reach back to a groundstation to give their information
         if client_list[client_id] == 2 and (client_id in client_twice):
             done_count +=1
-            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+            client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
         
         # Going through the csv rows
         counter += 1
@@ -67,7 +67,7 @@ def fedProxSat(sat_df,
     
     # Caculate idle time totals and averages
     for time in client_time_list:
-        idle_time_total += (stop_time_sec - start_time_sec)-time 
+        idle_time_total += (stop_time_sec - start_time_sec)-(10* 60 * 5)   
     idle_time_avg = idle_time_total/client_n
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 

@@ -49,7 +49,7 @@ def fedAvg2Sat(sat_df,
         # Track the first 10 satellites that make contact twice with a groundstation 
         if client_list[client_id] == 2 and len(client_twice) < limit:
             client_twice.append(client_id)
-            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+            client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
             done_count +=1
             
         # Going through the csv rows
