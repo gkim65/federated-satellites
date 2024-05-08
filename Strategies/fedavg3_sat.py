@@ -2,11 +2,13 @@ import numpy as np
 import wandb
 ###################    FedAvg2Sat   ########################
 
-def fedAvg2Sat(sat_df, 
+def fedAvg3Sat(sat_df, 
               counter, 
               client_n, 
               client_max, 
               sat_n, 
+              epoch_min,
+              cluster_n, 
               factor_s, 
               factor_c, 
               server_round,
@@ -17,6 +19,7 @@ def fedAvg2Sat(sat_df,
 
     # lists for tracking satellites
     client_list = np.zeros(client_n)
+    cluster_list = np.zeros((cluster_n,sat_n))
     client_time_list = np.zeros(client_n)
     client_twice = []
     done_count = 0
@@ -40,18 +43,43 @@ def fedAvg2Sat(sat_df,
         client_id = int(sat_n*(cluster_id/factor_c)-
                         (sat_n-(satellite_id/factor_s))-1)
 
-        # Track every single pass of every client satellite
-        client_list[client_id] += 1
+        cluster_id = int(cluster_id/factor_c)-1
+        satellite_id = int(satellite_id/factor_s)-1
 
+        # If not chosen to train already, track every single pass of satellites, and which cluster they are in
+        if client_list[client_id] != -1:
+            client_list[client_id] += 1
+            cluster_list[cluster_id,satellite_id] += 1
+
+        # If first time joining training line, track when they start
         if client_time_list[client_id] == 0:
             client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
-        
-        # Track the first 10 satellites that make contact twice with a groundstation 
+
+        # If the satellite sees groundstation twice and we don't already meet limit of clients
         if client_list[client_id] == 2 and len(client_twice) < limit:
             client_twice.append(client_id)
+            client_list[client_id] = -1
+            cluster_list[cluster_id,satellite_id] = 0
             client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
             done_count +=1
             
+        # If the current cluster seems to have other agents that are currently training and could give results back
+        if sum(cluster_list[cluster_id,:]) > 2:
+            for sat_count,sat_id in zip(cluster_list[cluster_id,:],range(sat_n)):
+                
+                # if a different satellite in the cluster has already start training
+                if sat_count == 1:
+                    # get id of sat
+                    client_id = int(sat_n*(cluster_id+1)- (sat_n-(sat_id+1))-1)
+
+                    # if enough time has passed for training and another satellite on the same cluster can communicate with intra sat link
+                    if (sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]) > (epoch_min *60*5):
+                        client_twice.append(client_id)
+                        client_list[client_id] = -1
+                        cluster_list[cluster_id,sat_id] = 0
+                        client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+                        done_count +=1
+                        
         # Going through the csv rows
         counter += 1
 
@@ -71,7 +99,7 @@ def fedAvg2Sat(sat_df,
     
     # Caculate idle time totals and averages
     for time in client_time_list:
-        idle_time_total += (stop_time_sec - start_time_sec)-(10* 60 * 5)   
+        idle_time_total += (stop_time_sec - start_time_sec)-time 
     idle_time_avg = idle_time_total/client_n
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 

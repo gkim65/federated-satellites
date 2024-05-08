@@ -25,6 +25,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 from Strategies.utils import choose_sat_csv 
 from Strategies.fedavg_sat import fedAvgSat
 from Strategies.fedavg2_sat import fedAvg2Sat
+from Strategies.fedavg3_sat import fedAvg3Sat
 from Strategies.fedprox_sat import fedProxSat
 from Strategies.fedprox2_sat import fedProx2Sat
 
@@ -101,6 +102,18 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_c,
                                        server_round,
                                        clients)
+        elif config["alg"] == "fedAvg3Sat":
+            chosen_clients, self.counter = fedAvg3Sat(self.satellite_access_csv, 
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["epochs"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients)
         elif config["alg"] == "fedProxSat":
             chosen_clients_times, self.counter = fedProxSat(self.satellite_access_csv, 
                                        self.counter,
@@ -185,6 +198,18 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_c,
                                        server_round,
                                        clients)
+        elif config["alg"] == "fedAvg3Sat":
+            chosen_clients, self.counter = fedAvg3Sat(self.satellite_access_csv, 
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["epochs"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients)
         elif config["alg"] == "fedProxSat":
             chosen_clients_times, self.counter = fedProxSat(self.satellite_access_csv, 
                                        self.counter,

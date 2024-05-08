@@ -47,6 +47,8 @@ def train(net, trainloader, config, cid):
 
     if 'duration' in config:
       total_epochs = int (float(config['duration']) / 60 / 5)
+      if total_epochs > 100:
+        total_epochs = 100
     else:
       total_epochs = int(config['epochs'])
 

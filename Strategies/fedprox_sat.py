@@ -67,7 +67,7 @@ def fedProxSat(sat_df,
     
     # Caculate idle time totals and averages
     for time in client_time_list:
-        idle_time_total += (stop_time_sec - start_time_sec)-(10* 60 * 5)   
+        idle_time_total += (stop_time_sec - start_time_sec)-time
     idle_time_avg = idle_time_total/client_n
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 
