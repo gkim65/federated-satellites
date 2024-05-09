@@ -145,6 +145,24 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 fit_ins.config["duration"] = str(time)
                 return_clients.append((client, fit_ins))
             return return_clients
+        
+        elif config["alg"] == "fedProx3Sat":
+            chosen_clients_times, self.counter = fedProx3Sat(self.satellite_access_csv, 
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["epochs"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                fit_ins.config["duration"] = str(time)
+                return_clients.append((client, fit_ins))
+            return return_clients
 
         return [(client, fit_ins) for client in chosen_clients]
     
@@ -240,6 +258,24 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 evaluate_ins.config["duration"] = str(time)
                 return_clients.append((client, evaluate_ins))
             return return_clients
+        elif config["alg"] == "fedProx3Sat":
+            chosen_clients_times, self.counter = fedProx3Sat(self.satellite_access_csv, 
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["epochs"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                evaluate_ins.config["duration"] = str(time)
+                return_clients.append((client, evaluate_ins))
+            return return_clients
+        
             
         # Return client/config pairs
         return [(client, evaluate_ins) for client in chosen_clients]

@@ -1,6 +1,6 @@
 import numpy as np
 import wandb
-###################    FedAvg2Sat   ########################
+###################    FedAvg3Sat   ########################
 
 def fedAvg3Sat(sat_df, 
               counter, 
