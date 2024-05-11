@@ -1,5 +1,8 @@
 import flwr as fl
+
+import os
 import ray
+
 import gc
 from client import client_fn
 from typing import Dict, List, Optional, Tuple, Union
@@ -15,7 +18,7 @@ import pandas as pd
 from Strategies.fedsat_gen import FedSatGen
 
 from configparser import ConfigParser
-import os
+import shutil
 
 import wandb
 import gdown
@@ -23,6 +26,7 @@ import gdown
 # #############################################################################
 # Federating pipeline with Flower
 # #############################################################################
+
 
 ### Run all configuration files
 for file_name in os.listdir("config_files"):
@@ -80,6 +84,13 @@ for file_name in os.listdir("config_files"):
             return config
     
         try:
+
+            try:
+                os.remove('../times.csv')
+                shutil.rmtree('../model_files')
+                print("deleted")
+            except:
+                print("no files to delete")
             my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
             results = fl.simulation.start_simulation(
                 num_clients= int(config_object["TEST_CONFIG"]["clients"]),
@@ -99,8 +110,15 @@ for file_name in os.listdir("config_files"):
             ray.shutdown()
             gc.collect()
             wandb.finish()
-
+            try:
+                shutil.rmtree('../model_files')
+            except:
+                print("no model files to delete")
         ray.shutdown()
         gc.collect()
         wandb.finish()
+        try:
+            shutil.rmtree('../model_files')
+        except:
+            print("no model files to delete")
 

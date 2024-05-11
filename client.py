@@ -12,7 +12,7 @@ from torchvision.datasets import CIFAR10
 # from grace:
 import matplotlib.pyplot as plt
 import numpy as np
-
+import os
 
 # Femnist specific
 from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST
@@ -47,8 +47,8 @@ def train(net, trainloader, config, cid):
 
     if 'duration' in config:
       total_epochs = int (float(config['duration']) / 60 / 5)
-      if total_epochs > 100:
-        total_epochs = 100
+      if total_epochs > 500:
+        total_epochs = 500
     else:
       total_epochs = int(config['epochs'])
 
@@ -62,7 +62,7 @@ def train(net, trainloader, config, cid):
           labels = labels.to(DEVICE)
           optimizer.zero_grad()
 
-          if config["alg"] == "fedProxSat" or config["alg"] == "fedProx2Sat":
+          if 'duration' in config:
             global_params = [val.detach().clone() for val in net.parameters()]
             proximal_mu = float(config["prox_term"])
             proximal_term = 0
@@ -73,26 +73,7 @@ def train(net, trainloader, config, cid):
             loss = criterion_mean(net(images), labels)
           loss.backward()
           optimizer.step()
-            
-            ### FROM HERE:
-            # # Train the local model w/ our data, biased by the difference from the global model
-            # local_optimizer.zero_grad()
-
-            # # Update local model
-            # local_loss = criterion_mean(local_net(images), labels)
-            # local_loss.backward()
-            # for local_param, global_param in zip(local_net.parameters(), init_global_net.parameters()):
-            #     local_param.grad += config['lambda'] * (local_param - global_param)
-            # local_optimizer.step()
-
-            # # Update global model
-            # global_optimizer.zero_grad()
-            # global_loss = criterion_mean(global_net(images), labels)
-            # global_loss.backward()
-            # global_optimizer.step()
-    
-    # save_data(losses, images_passed, images_failed, config['test_name'], cid, DEVICE)
-
+          
 
 # #############################################################################
 # Validation Loop
@@ -140,13 +121,36 @@ class FlowerClient(fl.client.NumPyClient):
     state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
     self.net.load_state_dict(state_dict, strict=True)
 
+  def save_local_model(self, config):
+    folder_name = "../model_files"
+    file_name = folder_name+"/"+config["model_update"]+'.pth'
+    print(file_name)
+
+    if not os.path.exists(folder_name):
+      os.makedirs(folder_name)
+
+    torch.save(self.net.state_dict(), file_name)
+
   def fit(self, parameters, config):
-    self.set_parameters(parameters)
+    folder_name = f'../model_files/{self.cid}.pth'
+    
+    # check if there is a local model saved to the disk, if so use that (FedBuff)
+    if os.path.exists(folder_name):
+      self.net.load_state_dict(torch.load(folder_name))
+    else:
+      self.set_parameters(parameters)
+
     train(self.net, self.trainloader, config, self.cid)
+
     return self.get_parameters(config={}), len(self.trainloader.dataset), {}
 
   def evaluate(self, parameters, config):
     self.set_parameters(parameters)
+    if 'model_update' in config:
+      self.save_local_model(config)
+      print(self.cid)
+      print("work pls: "+str(config['model_update']))
+
     loss, accuracy = test(self.net, self.testloader)
     return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
 
