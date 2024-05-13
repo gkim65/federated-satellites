@@ -11,8 +11,15 @@ def search_and_replace(file_path, search_word, replace_word):
    with open(file_path, 'w') as file:
       file.write(updated_contents)
 
+for i in range(18):
+   
+    if os.path.exists("server"+str(i)+".py"):
+        search_word = r'"test"#"WorkFP_5_03"'
+        replace_word = r'"WorkFP_5_03"'
+        search_and_replace("server"+str(i)+".py", search_word, replace_word)
+        
 ### SAVE INTO DIFFERENT FILES:
-
+"""
 list_name = [11,12,13]
 for folder_num in list_name:
 
@@ -33,4 +40,4 @@ for folder_num in list_name:
     
     search_word2 = '/nfs-share/grk27/Documents/more_tests2/federated-satellites/server.py'
     replace_word2 = "/nfs-share/grk27/Documents/more_tests2/federated-satellites/server"+str(folder_num)+".py"
-    search_and_replace(slrum_file, search_word2, replace_word2)
+    search_and_replace(slrum_file, search_word2, replace_word2)"""

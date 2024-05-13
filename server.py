@@ -41,7 +41,7 @@ for file_name in os.listdir("config_files"):
     #     url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
     #     gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
     # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
-    t_name = "test"#"WorkFP_5_03"
+    t_name = "WorkFP_5_13"
     for keys in config_object["TEST_CONFIG"].keys():
         print(keys)
         if keys != "sim_fname" and keys != "gs_locations" and keys != "slrum"  and keys != "client_cpu"  and keys != "client_gpu":
@@ -84,11 +84,20 @@ for file_name in os.listdir("config_files"):
             return config
     
         try:
-
+            
             try:
-                os.remove('../times.csv')
-                shutil.rmtree('../model_files')
+                name = config_object["TEST_CONFIG"]["name"]
+                if os.path.exists(f'times_{name}.csv'):
+                    os.remove(f'times_{name}.csv')
+                    print(f'times_{name}.csv')
+                if os.path.exists(f"model_files_{name}"):
+                    shutil.rmtree(f"model_files_{name}")
+                    print(f"model_files_{name}")
                 print("deleted")
+                folder_name = f"model_files_{name}"
+                if not os.path.exists(folder_name):
+                    os.makedirs(folder_name)
+
             except:
                 print("no files to delete")
             my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
@@ -111,14 +120,28 @@ for file_name in os.listdir("config_files"):
             gc.collect()
             wandb.finish()
             try:
-                shutil.rmtree('../model_files')
+                name = config_object["TEST_CONFIG"]["name"]
+                if os.path.exists(f'times_{name}.csv'):
+                    os.remove(f'times_{name}.csv')
+                    print(f'times_{name}.csv')
+                if os.path.exists(f"model_files_{name}"):
+                    shutil.rmtree(f"model_files_{name}")
+                    print(f"model_files_{name}")
+                print("deleted")
             except:
                 print("no model files to delete")
         ray.shutdown()
         gc.collect()
         wandb.finish()
         try:
-            shutil.rmtree('../model_files')
+            name = config_object["TEST_CONFIG"]["name"]
+            if os.path.exists(f'times_{name}.csv'):
+                os.remove(f'times_{name}.csv')
+                print(f'times_{name}.csv')
+            if os.path.exists(f"model_files_{name}"):
+                shutil.rmtree(f"model_files_{name}")
+                print(f"model_files_{name}")
+            print("deleted")
         except:
             print("no model files to delete")
 

@@ -17,5 +17,6 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 !server.py
 
 *.pkl
+*model_files_*
 
 

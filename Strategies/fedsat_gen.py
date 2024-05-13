@@ -178,7 +178,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_s,
                                        self.factor_c,
                                        server_round,
-                                       clients)
+                                       clients,
+                                       config["name"])
             return_clients = []
             for client,time in chosen_clients_times:
                 fit_ins.config["duration"] = str(time)
@@ -325,7 +326,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_s,
                                        self.factor_c,
                                        server_round,
-                                       clients)
+                                       clients,
+                                       config["name"])
             return_clients = []
             sid_count = 0
             for client,time in chosen_clients_times:

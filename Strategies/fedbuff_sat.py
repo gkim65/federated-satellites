@@ -3,7 +3,7 @@ import wandb
 import os
 import pandas as pd
 
-###################    FedProxSat   ########################
+###################    FedBuffSat   ########################
 
 def fedBuffSat(sat_df, 
               counter, 
@@ -13,7 +13,8 @@ def fedBuffSat(sat_df,
               factor_s, 
               factor_c, 
               server_round,
-              clients):
+              clients,
+              name):
 
     # Track starting time for reaching out to satellites
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
@@ -25,17 +26,21 @@ def fedBuffSat(sat_df,
     client_time_list = np.zeros(client_n)
 
     # fed_buff
-    file_name = '../times.csv'
-    
+    file_name = f'times_{name}.csv'
     # check if there is a local model saved to the disk, if so use that (FedBuff)
     if os.path.exists(file_name):
         end_times = pd.read_csv(file_name)
+        print("READING")
+        print(file_name)
     else:
         client_end_time_list = {}
         for i in range(client_n):
             client_end_time_list[str(i)] = start_time_sec
         end_times = pd.DataFrame.from_dict([client_end_time_list])
         end_times.to_csv(file_name)
+        print("SAVING")
+        print(file_name)
+        
 
     count_duration = 0
 
@@ -79,9 +84,9 @@ def fedBuffSat(sat_df,
             # fed_buff no need now:
             # print(client_id)
             # print(end_times)
-            client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - end_times[str(client_id)][0]
-            count_duration += sat_df['Duration (sec)'].iloc[counter] 
-            end_times[str(client_id)] = sat_df['End Time Seconds Cumulative'].iloc[counter]
+            client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[int(counter)] - end_times[str(client_id)][0]
+            count_duration += sat_df['Duration (sec)'].iloc[int(counter)] 
+            end_times[str(client_id)] = sat_df['End Time Seconds Cumulative'].iloc[int(counter)]
         
         # Going through the csv rows
         counter += 1

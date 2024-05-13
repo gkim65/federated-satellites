@@ -49,7 +49,7 @@ config_object["TEST_CONFIG"] = {
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
-        "sim_fname" : "/datasets/landsat/10s_10c_s_landsat.csv",
+        "sim_fname" : "/datasets/landsat/10s_10c_s_landsat_star.csv",
         "n_sat_in_cluster" : n_sat_c,
         "n_cluster" : n_c,
         "slrum" : "y",
@@ -63,7 +63,7 @@ config_object["TEST_CONFIG"] = {
 
 # NOTE: delete 1 client test case in the future
 
-folder_num = 12
+folder_num = 0 #int(config_object["TEST_CONFIG"]["prox_term"])*6+18
 for gs,name_list in zip(gs_list,name):
 
     if not os.path.exists("config_files"+str(folder_num)):
@@ -81,8 +81,8 @@ for gs,name_list in zip(gs_list,name):
     if not os.path.exists(slrum_file):
         shutil.copy("slrum_fed_sats.sh",slrum_file)
     
-    search_word2 = '/nfs-share/grk27/Documents/more_tests2/federated-satellites/server.py'
-    replace_word2 = "/nfs-share/grk27/Documents/more_tests2/federated-satellites/server"+str(folder_num)+".py"
+    search_word2 = '/nfs-share/grk27/Documents/federated-satellites/server.py'
+    replace_word2 = "/nfs-share/grk27/Documents/federated-satellites/server"+str(folder_num)+".py"
     search_and_replace(slrum_file, search_word2, replace_word2)
     
 

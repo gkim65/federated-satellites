@@ -122,8 +122,9 @@ class FlowerClient(fl.client.NumPyClient):
     self.net.load_state_dict(state_dict, strict=True)
 
   def save_local_model(self, config):
-    folder_name = "../model_files"
-    file_name = folder_name+"/"+config["model_update"]+'.pth'
+    name = config['name']
+    folder_name = f"model_files_{name}"
+    file_name = f'model_files_{name}/{self.cid}.pth'
     print(file_name)
 
     if not os.path.exists(folder_name):
@@ -132,10 +133,11 @@ class FlowerClient(fl.client.NumPyClient):
     torch.save(self.net.state_dict(), file_name)
 
   def fit(self, parameters, config):
-    folder_name = f'../model_files/{self.cid}.pth'
+    name = config['name']
+    folder_name = f'model_files_{name}/{self.cid}.pth'
     
     # check if there is a local model saved to the disk, if so use that (FedBuff)
-    if os.path.exists(folder_name):
+    if os.path.exists(folder_name) and config['alg'].startswith("FedBuff"):
       self.net.load_state_dict(torch.load(folder_name))
     else:
       self.set_parameters(parameters)
