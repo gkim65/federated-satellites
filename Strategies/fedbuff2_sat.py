@@ -1,5 +1,8 @@
 import numpy as np
 import wandb
+import os
+import pandas as pd
+
 ###################    FedBuff2Sat   ########################
 
 def fedBuff2Sat(sat_df, 
@@ -10,7 +13,8 @@ def fedBuff2Sat(sat_df,
               factor_s, 
               factor_c, 
               server_round,
-              clients):
+              clients,
+              name):
 
     # Track starting time for reaching out to satellites
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
@@ -18,6 +22,27 @@ def fedBuff2Sat(sat_df,
     # lists for tracking satellites
     client_list = np.zeros(client_n)
     client_time_list = np.zeros(client_n)
+
+
+    # fed_buff
+    file_name = f'times_{name}.csv'
+    # check if there is a local model saved to the disk, if so use that (FedBuff)
+    if os.path.exists(file_name):
+        end_times = pd.read_csv(file_name)
+        print("READING")
+        print(file_name)
+    else:
+        client_end_time_list = {}
+        for i in range(client_n):
+            client_end_time_list[str(i)] = start_time_sec
+        end_times = pd.DataFrame.from_dict([client_end_time_list])
+        end_times.to_csv(file_name)
+        print("SAVING")
+        print(file_name)
+        
+
+    count_duration = 0
+
     client_twice = []
     done_count = 0
     idle_time_total = 0
@@ -43,23 +68,27 @@ def fedBuff2Sat(sat_df,
         # Track every single pass of every client satellite
         client_list[client_id] += 1
 
-        # just keep start time for all clients in case we want to use them
-        if client_time_list[client_id] == 0:
-            client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
+        # # just keep start time for all clients in case we want to use them
+        # if client_time_list[client_id] == 0:
+        #     client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
         
         # Track the first 10 satellites that make contact twice with a groundstation 
         if client_list[client_id] == 2 and len(client_twice) < limit:
             client_twice.append(client_id)
-            client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+            # client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
             done_count +=1
-            
+
+            client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[int(counter)] - end_times[str(client_id)][0]
+            count_duration += sat_df['Duration (sec)'].iloc[int(counter)] 
+            end_times[str(client_id)] = sat_df['End Time Seconds Cumulative'].iloc[int(counter)]
+        
         # Going through the csv rows
         counter += 1
 
-    for id in range(client_n):
-        # Only track satellties as having been not idle if they trained this round
-        if id not in client_twice:
-            client_time_list[id] = 0
+    # for id in range(client_n):
+    #     # Only track satellties as having been not idle if they trained this round
+    #     if id not in client_twice:
+    #         client_time_list[id] = 0
     
 
     # TODO: Delete whenever i realize i know how to track this in wandb
@@ -71,8 +100,9 @@ def fedBuff2Sat(sat_df,
     stop_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
     
     # Caculate idle time totals and averages
-    for time in client_time_list:
-        idle_time_total += (stop_time_sec - start_time_sec)-time 
+    # for time in client_time_list:
+    #     idle_time_total += (stop_time_sec - start_time_sec)-time 
+    idle_time_total = count_duration
     idle_time_avg = idle_time_total/client_n
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 

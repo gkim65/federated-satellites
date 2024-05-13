@@ -21,8 +21,6 @@ def fedBuffSat(sat_df,
 
     # lists for tracking satellites
     client_list = np.zeros(client_n)
-
-    # fed_buff no need now:
     client_time_list = np.zeros(client_n)
 
     # fed_buff
