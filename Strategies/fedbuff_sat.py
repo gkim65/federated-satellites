@@ -14,7 +14,8 @@ def fedBuffSat(sat_df,
               factor_c, 
               server_round,
               clients,
-              name):
+              name,
+              alg):
 
     # Track starting time for reaching out to satellites
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
@@ -24,7 +25,7 @@ def fedBuffSat(sat_df,
     client_time_list = np.zeros(client_n)
 
     # fed_buff
-    file_name = f'times_{name}.csv'
+    file_name = f'/datasets/{alg}/times_{name}.csv'
     # check if there is a local model saved to the disk, if so use that (FedBuff)
     if os.path.exists(file_name):
         end_times = pd.read_csv(file_name)

@@ -123,8 +123,9 @@ class FlowerClient(fl.client.NumPyClient):
 
   def save_local_model(self, config):
     name = config['name']
-    folder_name = f"model_files_{name}"
-    file_name = f'model_files_{name}/{self.cid}.pth'
+    alg = config['alg']
+    folder_name = f'/datasets/{alg}/model_files_{name}/'
+    file_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
     print(file_name)
 
     if not os.path.exists(folder_name):
@@ -134,7 +135,8 @@ class FlowerClient(fl.client.NumPyClient):
 
   def fit(self, parameters, config):
     name = config['name']
-    folder_name = f'model_files_{name}/{self.cid}.pth'
+    alg = config['alg']
+    folder_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
     
     # check if there is a local model saved to the disk, if so use that (FedBuff)
     if os.path.exists(folder_name) and config['alg'].startswith("FedBuff"):

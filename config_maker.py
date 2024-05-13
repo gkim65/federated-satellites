@@ -45,7 +45,7 @@ config_object["TEST_CONFIG"] = {
         "clients": n_sat_c*n_c,
         "client_limit": 10,
         "dataset": "FEMNIST",
-        "alg": "fedProxSat",
+        "alg": "fedBuff2Sat",
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
@@ -63,7 +63,7 @@ config_object["TEST_CONFIG"] = {
 
 # NOTE: delete 1 client test case in the future
 
-folder_num = 0 #int(config_object["TEST_CONFIG"]["prox_term"])*6+18
+folder_num = 6 #int(config_object["TEST_CONFIG"]["prox_term"])*6+18
 for gs,name_list in zip(gs_list,name):
 
     if not os.path.exists("config_files"+str(folder_num)):
