@@ -45,34 +45,42 @@ def train(net, trainloader, config, cid):
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
     net.train() 
 
+
     if 'duration' in config:
       total_epochs = int (float(config['duration']) / 60 / 5)
       if total_epochs > 500:
         total_epochs = 500
     else:
-      total_epochs = int(config['epochs'])
+      if 'model_type' in config:
+        if config['model_type'] == "local_cluster":
+          total_epochs = int(config['epochs'])
+        else:
+          total_epochs = -1
+      else:
+        total_epochs = int(config['epochs'])
 
     print(total_epochs)
 
-    for epoch in range(total_epochs):
-        print("Epoch: "+str(epoch))
-        
-        for images, labels in trainloader:
-          images = images.to(DEVICE)      # @ make sure to set images/labels to the device you're using
-          labels = labels.to(DEVICE)
-          optimizer.zero_grad()
+    if total_epochs != -1:
+      for epoch in range(total_epochs):
+          print("Epoch: "+str(epoch))
+          
+          for images, labels in trainloader:
+            images = images.to(DEVICE)      # @ make sure to set images/labels to the device you're using
+            labels = labels.to(DEVICE)
+            optimizer.zero_grad()
 
-          if 'duration' in config:
-            global_params = [val.detach().clone() for val in net.parameters()]
-            proximal_mu = float(config["prox_term"])
-            proximal_term = 0
-            for local_weights, global_weights in zip(net.parameters(), global_params):
-              proximal_term += torch.square((local_weights - global_weights).norm(2))
-            loss = criterion_mean(net(images), labels) + (proximal_mu / 2) * proximal_term
-          else:
-            loss = criterion_mean(net(images), labels)
-          loss.backward()
-          optimizer.step()
+            if 'duration' in config:
+              global_params = [val.detach().clone() for val in net.parameters()]
+              proximal_mu = float(config["prox_term"])
+              proximal_term = 0
+              for local_weights, global_weights in zip(net.parameters(), global_params):
+                proximal_term += torch.square((local_weights - global_weights).norm(2))
+              loss = criterion_mean(net(images), labels) + (proximal_mu / 2) * proximal_term
+            else:
+              loss = criterion_mean(net(images), labels)
+            loss.backward()
+            optimizer.step()
           
 
 # #############################################################################
@@ -124,8 +132,15 @@ class FlowerClient(fl.client.NumPyClient):
   def save_local_model(self, config):
     name = config['name']
     alg = config['alg']
+
+    if alg == "AutoFLSat":
+      cluster = config['cluster_identifier']
+      agg_cluster = config['agg_cluster']
+      file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+    else:
+      file_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
+
     folder_name = f'/datasets/{alg}/model_files_{name}/'
-    file_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
     print(file_name)
 
     if not os.path.exists(folder_name):
@@ -136,11 +151,21 @@ class FlowerClient(fl.client.NumPyClient):
   def fit(self, parameters, config):
     name = config['name']
     alg = config['alg']
-    folder_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
-    
+    buff_name = ""
+    auto_name = ""
+
+    if alg == "AutoFLSat":
+      cluster = config['cluster_identifier']
+      agg_cluster = config['agg_cluster']
+      auto_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+    else:
+      buff_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
     # check if there is a local model saved to the disk, if so use that (FedBuff)
-    if os.path.exists(folder_name) and config['alg'].startswith("FedBuff"):
-      self.net.load_state_dict(torch.load(folder_name))
+
+    if os.path.exists(buff_name) and config['alg'].startswith("FedBuff"):
+      self.net.load_state_dict(torch.load(buff_name))
+    elif os.path.exists(auto_name) and config['alg'].startswith("AutoFLSat"):
+      self.net.load_state_dict(torch.load(auto_name))
     else:
       self.set_parameters(parameters)
 

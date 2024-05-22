@@ -32,6 +32,7 @@ from Strategies.fedprox3_sat import fedProx3Sat
 from Strategies.fedbuff_sat import fedBuffSat
 from Strategies.fedbuff2_sat import fedBuff2Sat
 from Strategies.fedbuff3_sat import fedBuff3Sat
+from Strategies.AutoFLSat import AutoFLSat
 
 import pandas as pd
 import wandb
@@ -66,6 +67,13 @@ class FedSatGen(fl.server.strategy.FedAvg):
         # choose only satellites that we want
         self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
         self.satellite_client_list = []
+        self.sim_times_start = [0 for i in range(config["n_cluster"])]
+        self.sim_times_currents = [0 for i in range(config["n_cluster"])]
+        self.cluster_round_starts = [0 for i in range(config["n_cluster"])]
+        self.cluster_round_currents = [0 for i in range(config["n_cluster"])]
+        self.model_type = "local_cluster"
+        self.cluster_num = 0
+        self.agg_cluster = agg_cluster
     
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -230,8 +238,42 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 self.satellite_client_list.append(int(client.cid))
                 return_clients.append((client, deepcopy(fit_ins)))
             return return_clients
-        return [(client, fit_ins) for client in chosen_clients]
         
+        elif config["alg"] == "AutoFLSat":
+            # self.sim_times_start = []
+            # self.sim_times_currents = []
+            # self.cluster_round_starts = []
+            # self.cluster_round_currents = []
+            chosen_clients, self.counter, self.sim_times_start, self.sim_times_currents, self.cluster_round_starts, self.cluster_round_currents, model_type = AutoFLSat(self.satellite_access_csv, 
+                                                        self.counter, 
+                                                        int(config["clients"]), 
+                                                        int(config["client_limit"]), 
+                                                        int(config["n_sat_in_cluster"]), 
+                                                        int(config["n_cluster"]),
+                                                        self.factor_s, 
+                                                        self.factor_c, 
+                                                        server_round,
+                                                        clients,
+                                                        config["name"],
+                                                        config["alg"],
+                                                        self.sim_times_start,
+                                                        self.sim_times_currents,
+                                                        self.cluster_round_starts,
+                                                        self.cluster_round_currents
+                                                        int(config["epochs"]))
+            return_clients = []
+
+            for client,cluster,agg_cluster in chosen_clients:
+                self.model_type = model_type
+                self.cluster_num = cluster
+                self.agg_cluster = agg_cluster
+                fit_ins.config["model_type"] = model_type
+                fit_ins.config["cluster_identifier"] = cluster
+                fit_ins.config["agg_cluster"] = agg_cluster
+                self.satellite_client_list.append(int(client.cid))
+                return_clients.append((client, deepcopy(fit_ins)))
+            return return_clients
+        return [(client, fit_ins) for client in chosen_clients]
 
 
         
@@ -405,6 +447,11 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 return_clients.append((client, deepcopy(evaluate_ins)))
                 sid_count += 1
             return return_clients
+        elif config["alg"] == "AutoFLSat":
+            evaluate_ins.config["model_update"] = self.model_type
+            evaluate_ins.config["cluster_identifier"] = self.cluster_num 
+            evaluate_ins.config["agg_cluster"] = self.agg_cluster 
+            chosen_clients = [client for client in clients if int(client.cid) in self.satellite_client_list]
         
             
         # Return client/config pairs
