@@ -22,7 +22,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from Strategies.utils import choose_sat_csv 
+from Strategies.utils import choose_sat_csv , choose_sat_csv_auto
 from Strategies.fedavg_sat import fedAvgSat
 from Strategies.fedavg2_sat import fedAvg2Sat
 from Strategies.fedavg3_sat import fedAvg3Sat
@@ -51,29 +51,33 @@ class FedSatGen(fl.server.strategy.FedAvg):
         self.on_fit_config_fn = on_fit_config_fn
         self.counter = 0
         self.time_wait = time_wait
-        self.satellite_access_csv_name = satellite_access_csv
+        config = self.on_fit_config_fn(1)
+        self.satellite_access_csv_name = config['sim_fname']
         try:
-            self.satellite_access_csv = pd.read_csv(satellite_access_csv)
+            self.satellite_access_csv = pd.read_csv(self.satellite_access_csv_name)
         except:
-            self.satellite_access_csv = pd.read_csv(".."+satellite_access_csv)
+            self.satellite_access_csv = pd.read_csv(".."+self.satellite_access_csv_name)
 
         # TODO: Change this it will keep causing index erros if you don't and switch the csv files
         og_s = int(self.satellite_access_csv_name.split("/")[-1].split("_")[0][:-1])
         og_c = int(self.satellite_access_csv_name.split("/")[-1].split("_")[1][:-1])
-        config = self.on_fit_config_fn(1)
+
+
         gs = config["gs_locations"][1:-1].split(",")
         self.factor_s = og_s / int(config["n_sat_in_cluster"])
         self.factor_c = og_c / int(config["n_cluster"])
         # choose only satellites that we want
-        self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
+        if config['alg'] == "AutoFLSat":
+            self.satellite_access_csv = choose_sat_csv_auto(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
+        else:
+            self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
         self.satellite_client_list = []
-        self.sim_times_start = [0 for i in range(config["n_cluster"])]
-        self.sim_times_currents = [0 for i in range(config["n_cluster"])]
-        self.cluster_round_starts = [0 for i in range(config["n_cluster"])]
-        self.cluster_round_currents = [0 for i in range(config["n_cluster"])]
+        self.sim_times_start = [0 for i in range(int(config["n_cluster"]))]
+        self.sim_times_currents = [0 for i in range(int(config["n_cluster"]))]
+        self.cluster_round_starts = [0 for i in range(int(config["n_cluster"]))]
+        self.cluster_round_currents = [0 for i in range(int(config["n_cluster"]))]
         self.model_type = "local_cluster"
         self.cluster_num = 0
-        self.agg_cluster = agg_cluster
     
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -94,7 +98,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
         clients = client_manager.sample(
             num_clients=sample_size, min_num_clients=min_num_clients
         )
-
+        
         if config["alg"] == "fedAvgSat":
             chosen_clients, self.counter = fedAvgSat(self.satellite_access_csv, 
                                        self.counter,
@@ -244,7 +248,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
             # self.sim_times_currents = []
             # self.cluster_round_starts = []
             # self.cluster_round_currents = []
-            chosen_clients, self.counter, self.sim_times_start, self.sim_times_currents, self.cluster_round_starts, self.cluster_round_currents, model_type = AutoFLSat(self.satellite_access_csv, 
+            chosen_clients, agg_clients, self.counter, self.sim_times_start, self.sim_times_currents, self.cluster_round_starts, self.cluster_round_currents, self.model_type = AutoFLSat(self.satellite_access_csv, 
                                                         self.counter, 
                                                         int(config["clients"]), 
                                                         int(config["client_limit"]), 
@@ -259,20 +263,32 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                                         self.sim_times_start,
                                                         self.sim_times_currents,
                                                         self.cluster_round_starts,
-                                                        self.cluster_round_currents
+                                                        self.cluster_round_currents,
                                                         int(config["epochs"]))
             return_clients = []
+            self.satellite_client_list = []
 
-            for client,cluster,agg_cluster in chosen_clients:
-                self.model_type = model_type
-                self.cluster_num = cluster
-                self.agg_cluster = agg_cluster
-                fit_ins.config["model_type"] = model_type
-                fit_ins.config["cluster_identifier"] = cluster
-                fit_ins.config["agg_cluster"] = agg_cluster
-                self.satellite_client_list.append(int(client.cid))
-                return_clients.append((client, deepcopy(fit_ins)))
-            return return_clients
+            if self.model_type == "local_cluster":
+                for client,cluster,agg_cluster in chosen_clients:
+                    self.cluster_num = cluster
+                    fit_ins.config["model_type"] = str(self.model_type)
+                    fit_ins.config["cluster_identifier"] = str(cluster)
+                    fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    self.satellite_client_list.append(int(client.cid))
+                    return_clients.append((client, deepcopy(fit_ins)))
+                return return_clients
+            elif self.model_type == "global_cluster":
+                for client,cluster,agg_cluster in chosen_clients:
+                    self.cluster_num = cluster
+                    self.satellite_client_list.append(int(client.cid))
+                
+                for client,cluster,agg_cluster in agg_clients:
+                    fit_ins.config["model_type"] = str(self.model_type)
+                    fit_ins.config["cluster_identifier"] = str(cluster)
+                    fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    return_clients.append((client, deepcopy(fit_ins)))
+                return return_clients
+                
         return [(client, fit_ins) for client in chosen_clients]
 
 
@@ -449,8 +465,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
             return return_clients
         elif config["alg"] == "AutoFLSat":
             evaluate_ins.config["model_update"] = self.model_type
-            evaluate_ins.config["cluster_identifier"] = self.cluster_num 
-            evaluate_ins.config["agg_cluster"] = self.agg_cluster 
+            evaluate_ins.config["cluster_identifier"] = str(self.cluster_num)
+            evaluate_ins.config["agg_cluster"] = str(self.cluster_num)
             chosen_clients = [client for client in clients if int(client.cid) in self.satellite_client_list]
         
             
@@ -479,9 +495,13 @@ class FedSatGen(fl.server.strategy.FedAvg):
         aggregated_accuracy = sum(accuracies) / sum(examples)
         print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
     
-
+        
         # log metrics to wandb
-        wandb.log({"acc": aggregated_accuracy, "loss": aggregated_loss, "server_round": server_round})
+        wandb.log({"acc": aggregated_accuracy, 
+                   "loss": aggregated_loss, 
+                   "server_round": server_round,
+                   "cluster_round": self.cluster_round_currents[self.cluster_num -1],
+                   "cluster_num": self.cluster_num})
         
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}

@@ -130,6 +130,15 @@ def choose_sat_csv(df, og_s, og_c, new_s, new_c, gs):
     sat_new_sorted = sat_new.sort_values('Start Time Seconds Cumulative').reset_index()
     return sat_new_sorted
 
+def choose_sat_csv_auto(df, og_s, og_c, new_s, new_c, gs):
+    if og_s%new_s == 0 and og_c%new_c == 0:
+        client_list = [int(og_s/new_s*(i+1)) for i in range(new_s)]
+        cluster_list = [int(og_c/new_c*(i+1)) for i in range(new_c)]
+    mask = (df['cluster_num_1'].isin(cluster_list) & (df['sat_num_1'].isin(client_list)) & df['cluster_num_2'].isin(cluster_list) & (df['sat_num_2'].isin(client_list)) & (df['Duration (sec)'] != 7862400.000))
+    sat_new = df[mask]
+    sat_new_sorted = sat_new.sort_values('Start Time Seconds Cumulative').reset_index()
+    return sat_new_sorted
+
 
 
 # TODO: CLEAN THIS UP

@@ -180,6 +180,21 @@ class FlowerClient(fl.client.NumPyClient):
       print(self.cid)
       print("work pls: "+str(config['model_update']))
 
+      # delete mid models of other clusters after agg
+      if config['model_update'] == 'global_cluster':
+        name = config['name']
+        alg = config['alg']
+        cluster_n = config['n_cluster']
+        cluster = config['cluster_identifier']
+
+        for agg_cluster in range(1,int(cluster_n)+1):
+            if int(cluster) != int(agg_cluster):
+              file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{str(agg_cluster)}.pth'
+              if os.path.exists(file_name):
+                os.remove(file_name)
+                print(file_name)
+                print("deleted")
+
     loss, accuracy = test(self.net, self.testloader)
     return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
 

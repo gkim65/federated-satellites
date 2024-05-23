@@ -2,6 +2,7 @@ import numpy as np
 import wandb
 import os
 import pandas as pd
+import shutil
 
 ###################    AutoFLSat   ########################
 
@@ -10,7 +11,7 @@ def AutoFLSat(sat_df,
               client_n, 
               client_max, 
               sat_n, 
-              cluster_n
+              cluster_n,
               factor_s, 
               factor_c, 
               server_round,
@@ -20,83 +21,141 @@ def AutoFLSat(sat_df,
               sim_times_start,
               sim_times_currents,
               cluster_round_starts,
-              cluster_round_currents
-              epochs):
+              cluster_round_currents,
+              epochs ):
 
 
     # Track starting time for reaching out to satellites
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
+
+    end_time_sec = sat_df['End Time Seconds Cumulative'].iloc[counter]
         
     cluster_clients = []
+
 
     # Hard code the initial value that the sims start with
     if all(sim_time == 0 for sim_time in sim_times_currents):
         for i in range(len(sim_times_currents)):
             sim_times_currents[i] = 1711987200
 
-    if False: # all(sim_time >= start_time_sec for i in sim_times_currents) :
+    # first check if all files exist for cluster ones
+    exists = np.zeros(cluster_n)
+    for cluster in range(1,cluster_n+1):
+        for agg_cluster in range(1,cluster_n+1):
+            file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+            if not os.path.exists(file_name):
+                exists[cluster-1] = 1           # note that it doesn't have all files yet
 
-        # need cluster and satellite id to calculate client_id
-        cluster_id_1 = ((sat_df['cluster_num_1'].iloc[counter]))
-        satellite_id_1 = ((sat_df['sat_num_1'].iloc[counter]))
+    # go through each cluster, if all exist then aggregate and send client params
+    for cluster_check,ind in zip(exists,range(len(exists))):
+        if cluster_check == 0:
+            
+            # cluster clients to aggregate
+            y = [[clients[i],ind+1,i] for i in range(1,cluster_n+1)]
 
-        cluster_id_2 = ((sat_df['cluster_num_2'].iloc[counter]))
-        satellite_id_2 = ((sat_df['sat_num_2'].iloc[counter]))
-        
-        # calculate client_id from which cluster and which satellite
-        client_id_1 = int(sat_n*(cluster_id_1/factor_c)-
-                        (sat_n-(satellite_id_1/factor_s))-1)
-        
-        client_id_2 = int(sat_n*(cluster_id_2/factor_c)-
-                        (sat_n-(satellite_id_2/factor_s))-1)
-
-        # get all clusters
-        for client in [int(factor_s*(i+1)) for i in range(sat_n)]:
-            client_id = int(sat_n*(cluster/factor_c)-
-                        (sat_n-(client/factor_s))-1)
-            cluster_clients.append(client_id)
-
-        wandb.log({"cluster_round_current_time": cluster_times_df[str(cluster)],
-                "cluster_id": cluster,
-                "cluster_rounds": cluster_rounds_df[str(cluster)],
-                "agg_type": "localAgg",
-                "server_round": server_round})
-
-        x = [[clients[0],cluster_id_1],[clients[1],cluster_id_2]]
-        counter += 1
-
-        return x, counter, sim_times_start, sim_times_currents, cluster_round_starts, cluster_round_currents, "other_cluster"
-        
-
-    else:
-        cluster = np.argmin(cluster_times_df)
-
-        cluster_round_currents[str(cluster)] += 1
-
-        sim_times_currents[str(cluster)] += epochs*60*5
-
-        wandb.log({"cluster_round_current_time": cluster_times_df[str(cluster)],
-                "cluster_id": cluster,
-                "cluster_rounds": cluster_rounds_df[str(cluster)],
-                "agg_type": "localAgg",
+            # delete after aggregate
+            wandb.log({"cluster_round_current_time": sim_times_currents[(ind)],
+                "cluster_id": ind+1,
+                "cluster_rounds": cluster_round_currents[(ind)],
+                "agg_type": "globalAgg",
                 "server_round": server_round})
         
-        # get all clusters
-        for client in [int(factor_s*(i+1)) for i in range(sat_n)]:
-            client_id = int(sat_n*(cluster/factor_c)-
-                        (sat_n-(client/factor_s))-1)
-            cluster_clients.append(client_id)
+            # get all clusters
+            for client in [i for i in range(sat_n)]:
+                client_id = int(sat_n*((ind+1))-
+                            (sat_n-((client))))
+                cluster_clients.append(client_id)
+            
+            x = [[client,ind+1,ind+1] for client in clients if int(client.cid) in cluster_clients]
 
-        
-        x = [[client,cluster] for client in clients if int(client.cid) in cluster_clients]
+            return x, y, counter, sim_times_start, sim_times_currents, cluster_round_starts, cluster_round_currents, "global_cluster"
+            
 
-        return x, counter, sim_times_start, sim_times_currents, cluster_round_starts, cluster_round_currents, "local_cluster"
+                
+        # check if any thing is comms ing right now
+        cluster_id_1 = int(((sat_df['cluster_num_1'].iloc[counter]))/factor_c)
+
+        cluster_id_2 = int(((sat_df['cluster_num_2'].iloc[counter]))/factor_c)
+
+        duration = ((sat_df['Duration (sec)'].iloc[int(counter)]))
+        send_time = 100
+        counter_start = counter
+        sent = np.zeros([cluster_n,cluster_n])
+        while (sim_times_currents[cluster_id_1-1] >= start_time_sec and sim_times_currents[cluster_id_2-1] >= start_time_sec and 
+            duration > send_time):#and sim_times_currents[cluster_id_1-1] < end_time_sec-send_time and sim_times_currents[cluster_id_2-1]  < end_time_sec-send_time) :
+
+            print(sim_times_currents)
+            print(start_time_sec)
+            print(duration)
+            print(sent)
+
+            file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+            
+            if sent[cluster_id_1-1,cluster_id_2-1] == 0:
+                if os.path.exists(f'/datasets/{alg}/model_files_{name}/{cluster_id_1}_{cluster_id_1}.pth'):
+                    shutil.copy(f'/datasets/{alg}/model_files_{name}/{cluster_id_1}_{cluster_id_1}.pth',
+                                f'/datasets/{alg}/model_files_{name}/{cluster_id_1}_{cluster_id_2}.pth')
+                    sent[cluster_id_1-1,cluster_id_2-1] = 1
+                print("sent from ", str(cluster_id_1), " to ", str(cluster_id_2))
+                print("Pass complete")
+
+            if sent[cluster_id_2-1,cluster_id_1-1] == 0 :
+                if os.path.exists(f'/datasets/{alg}/model_files_{name}/{cluster_id_2}_{cluster_id_2}.pth'):
+                    shutil.copy(f'/datasets/{alg}/model_files_{name}/{cluster_id_2}_{cluster_id_2}.pth',
+                                f'/datasets/{alg}/model_files_{name}/{cluster_id_2}_{cluster_id_1}.pth')
+                    sent[cluster_id_2-1,cluster_id_1-1] = 1
+                print("sent from ", str(cluster_id_2), " to ", str(cluster_id_1))
+                print("Pass complete")
+            counter += 1
+            wandb.log({"comms_cluster_1": cluster_id_1,
+                    "comms_cluster_2": cluster_id_2,
+                    "cluster_1_round": cluster_round_currents[(cluster_id_1-1)],
+                    "cluster_2_round": cluster_round_currents[(cluster_id_2-1)],
+                    "saved_into_1": sent[cluster_id_1-1,cluster_id_2-1],
+                    "saved_into_2": sent[cluster_id_2-1,cluster_id_1-1],
+                        "server_round": server_round})
+                # check if any thing is comms ing right now
+            cluster_id_1 = int(((sat_df['cluster_num_1'].iloc[counter]))/factor_c)
+
+            cluster_id_2 = int(((sat_df['cluster_num_2'].iloc[counter]))/factor_c)
+
+            duration = ((sat_df['Duration (sec)'].iloc[int(counter)]))
+
+            # Track starting time for reaching out to satellites
+            start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
+
+        if counter_start == counter:
+            counter +=1
+
+
+    cluster_index = np.argmin(cluster_round_currents)
+    cluster = cluster_index+1
+    cluster_round_currents[cluster_index] += 1
+
+    sim_times_currents[cluster_index] += epochs*60
+
+    wandb.log({"cluster_round_current_time": sim_times_currents[(cluster_index)],
+            "cluster_id": cluster,
+            "cluster_rounds": cluster_round_currents[(cluster_index)],
+            "agg_type": "localAgg",
+            "server_round": server_round})
+    
+    # get all clusters
+    for client in [i for i in range(sat_n)]:
+        client_id = int(sat_n*(cluster)-
+                    (sat_n-(client)))
+        cluster_clients.append(client_id)
+    # print(cluster_clients)
+
+    x = [[client,cluster,cluster] for client in clients if int(client.cid) in cluster_clients]
+
+    return x, x, counter, sim_times_start, sim_times_currents, cluster_round_starts, cluster_round_currents, "local_cluster"
         
 
 
         # for each round track which server round is associated with which
         # need to track duration of each round? >> track how many rounds were needed to receive
-        ,
+        
                 # "duration" : stop_time_sec - start_time_sec, 
                 # "idle_time_total": idle_time_total,
                 # "idle_time_avg": idle_time_avg

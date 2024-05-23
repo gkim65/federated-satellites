@@ -17,8 +17,8 @@ def search_and_replace(file_path, search_word, replace_word):
 
 variable_name = "wait_time"
 epochs = [10] #[5,10,25,50,100]
-sats = [1,2,5,10] #[1,2,5,10,25,50]
-clusters = [1,2,5,10] #[1,5,25]
+sats = [10]#[1,2,5,10] #[1,2,5,10,25,50]
+clusters = [1,4]#[1,2,5,10] #[1,5,25]
 # ground_station_list = ["Seattle", "Hawthorne", "Cape_Canaveral","Boston","Colorado_Springs"]
 # gs_list = ["[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]#["[Boston,]","[Boston,Seattle]","[Boston,Seattle,Cape_Canaveral]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs]","[Boston,Seattle,Cape_Canaveral,Colorado_Springs,Hawthorne]"]
 gs_list = ["[Sioux_Falls]",
@@ -45,11 +45,11 @@ config_object["TEST_CONFIG"] = {
         "clients": n_sat_c*n_c,
         "client_limit": 10,
         "dataset": "FEMNIST",
-        "alg": "fedBuff2Sat",
+        "alg": "AutoFLSat",
         "learning_rate": 0.001,
         "momentum": 0.9,
         "wait_time" : 7,
-        "sim_fname" : "/datasets/landsat/10s_10c_s_landsat_star.csv",
+        "sim_fname" : "/datasets/landsat/10s_4c_s_landsat_star_inter.csv",
         "n_sat_in_cluster" : n_sat_c,
         "n_cluster" : n_c,
         "slrum" : "y",

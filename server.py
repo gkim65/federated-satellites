@@ -41,7 +41,7 @@ for file_name in os.listdir("config_files"):
     #     url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
     #     gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
     # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
-    t_name = "WorkFP_5_06"
+    t_name = "testing"
     for keys in config_object["TEST_CONFIG"].keys():
         print(keys)
         if keys != "sim_fname" and keys != "gs_locations" and keys != "slrum"  and keys != "client_cpu"  and keys != "client_gpu":
@@ -83,56 +83,58 @@ for file_name in os.listdir("config_files"):
             config = config_object["TEST_CONFIG"]
             return config
     
+        # try:
+            
         try:
             
-            try:
-                
-                alg = config_object["TEST_CONFIG"]["alg"]
-                name = config_object["TEST_CONFIG"]["name"]
-                if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
-                    os.remove(f'/datasets/{alg}/times_{name}.csv')
-                    print(f'/datasets/{alg}/times_{name}.csv')
-                if os.path.exists(f"/datasets/{alg}/model_files_{name}"):
-                    shutil.rmtree(f"/datasets/{alg}/model_files_{name}")
-                    print(f"/datasets/{alg}/model_files_{name}")
+            alg = config_object["TEST_CONFIG"]["alg"]
+            name = config_object["TEST_CONFIG"]["name"]
+            if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
+                os.remove(f'/datasets/{alg}/times_{name}.csv')
+                print(f'/datasets/{alg}/times_{name}.csv')
                 print("deleted")
-                folder_name = f"/datasets/{alg}/model_files_{name}"
-                if not os.path.exists(folder_name):
-                    os.makedirs(folder_name)
+            if os.path.exists(f"/datasets/{alg}/model_files_{name}"):
+                shutil.rmtree(f"/datasets/{alg}/model_files_{name}")
+                print(f"/datasets/{alg}/model_files_{name}")
+                print("deleted")
+            folder_name = f"/datasets/{alg}/model_files_{name}"
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+                print("made ", folder_name )
 
-            except:
-                print("no files to delete")
-            my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
-            results = fl.simulation.start_simulation(
-                num_clients= int(config_object["TEST_CONFIG"]["clients"]),
-                clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
-                client_fn=client_fn,
-                config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
-                
-                strategy=FedSatGen(
-                    on_fit_config_fn=fit_config, 
-                    satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
-                    time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
-                    ),
-                client_resources = my_client_resources 
-                    
-            )
         except:
-            ray.shutdown()
-            gc.collect()
-            wandb.finish()
-            try:
-                name = config_object["TEST_CONFIG"]["name"]
-                alg = config_object["TEST_CONFIG"]["alg"]
-                if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
-                    os.remove(f'/datasets/{alg}/times_{name}.csv')
-                    print(f'/datasets/{alg}/times_{name}.csv')
-                if os.path.exists(f"/datasets/{alg}/model_files_{name}"):
-                    shutil.rmtree(f"/datasets/{alg}/model_files_{name}")
-                    print(f"/datasets/{alg}/model_files_{name}")
-                print("deleted")
-            except:
-                print("no model files to delete")
+            print("no files to delete")
+        my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
+        results = fl.simulation.start_simulation(
+            num_clients= int(config_object["TEST_CONFIG"]["clients"]),
+            clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
+            client_fn=client_fn,
+            config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
+            
+            strategy=FedSatGen(
+                on_fit_config_fn=fit_config, 
+                satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
+                time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
+                ),
+            client_resources = my_client_resources 
+                
+        )
+        # except:
+        #     ray.shutdown()
+        #     gc.collect()
+        #     wandb.finish()
+        #     try:
+        #         name = config_object["TEST_CONFIG"]["name"]
+        #         alg = config_object["TEST_CONFIG"]["alg"]
+        #         if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
+        #             os.remove(f'/datasets/{alg}/times_{name}.csv')
+        #             print(f'/datasets/{alg}/times_{name}.csv')
+        #         if os.path.exists(f"/datasets/{alg}/model_files_{name}"):
+        #             shutil.rmtree(f"/datasets/{alg}/model_files_{name}")
+        #             print(f"/datasets/{alg}/model_files_{name}")
+        #         print("deleted")
+        #     except:
+        #         print("no model files to delete")
         ray.shutdown()
         gc.collect()
         wandb.finish()

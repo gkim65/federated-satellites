@@ -9,4 +9,4 @@
 
 source /nfs-share/grk27/miniconda3/bin/activate fed_sats
 
-srun python /nfs-share/grk27/Documents/federated-satellites/server.py
+srun python /nfs-share/grk27/Documents/practice/federated-satellites/server.py
