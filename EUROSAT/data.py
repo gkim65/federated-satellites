@@ -23,7 +23,16 @@ def downloadEUROSAT():
     """
     #  Download compressed dataset
     url = 'http://madm.dfki.de/files/sentinel/EuroSAT.zip'
-    save_path = "../../datasets/EuroSAT.zip"
+    try:
+        folder_name = "../../datasets/EuroSAT"
+        if not os.path.exists(save_path):
+            raise ValueError(f"Required files do not exist, path: {save_path}")
+    except:
+        save_path = "../../datasets/EuroSAT.zip"
+        print("found data", save_path)
+        if not os.path.exists(save_path):
+            raise ValueError(f"Required files do not exist, path: {save_path}")
+    
     if not os.path.exists(save_path):
         print("Downloading Zip", save_path)
         r = requests.get(url, stream=True)
@@ -34,7 +43,16 @@ def downloadEUROSAT():
 
     # Decompress dataset
 
-    folder_name = "../../datasets/EuroSAT"
+    try:
+        folder_name = "/datasets/EuroSAT"
+        if not os.path.exists(folder_name):
+            raise ValueError(f"Required files do not exist, path: {folder_name}")
+    except:
+        folder_name = "../../datasets/EuroSAT"
+        print("found data", folder_name)
+        if not os.path.exists(folder_name):
+            raise ValueError(f"Required files do not exist, path: {folder_name}")
+    
     if not os.path.exists(folder_name):
         print('Extracting EuroSAT data...')
         with zipfile.ZipFile("../../datasets/EuroSAT.zip", 'r') as zip_ref:
