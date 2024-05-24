@@ -17,6 +17,8 @@ import os
 # Femnist specific
 from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST
 
+# EuroSAT specific
+from EUROSAT.data import EuroSATNet, load_EUROSAT
 
 # #############################################################################
 # Checking for Client Resources
@@ -209,7 +211,7 @@ class FlowerClient(fl.client.NumPyClient):
     loss, accuracy = test(self.net, self.testloader)
     return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
 
-def client_fn(cid: int) -> FlowerClient:
+def client_fn_femnist(cid: int) -> FlowerClient:
 
     # Load model and data
     print("MADE CLIENT")
@@ -223,9 +225,29 @@ def client_fn(cid: int) -> FlowerClient:
         print ("MPS device not found, using CPU")
         DEVICE = torch.device("cpu")
         
-    # TODO: need to find a way to fix this, how to switch specific datasets
-    # if config_object["TEST_CONFIG"]["dataset"] == "FEMNIST":
     net = FemnistNet().to(DEVICE)
     trainloader, testloader = load_FEMNIST(cid)
+    
+    return FlowerClient(cid, net, trainloader, testloader).to_client()
+
+def client_fn_EuroSAT(cid: int) -> FlowerClient:
+
+    # Load model and data
+    print("MADE CLIENT")
+    if torch.cuda.is_available():
+        print ("GPU CUDA")
+        DEVICE = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        print ("MPS device")
+        DEVICE = torch.device("mps")
+    else:
+        print ("MPS device not found, using CPU")
+        DEVICE = torch.device("cpu")
+        
+
+
+
+    net = EuroSATNet().to(DEVICE)
+    trainloader, testloader = load_EUROSAT(cid)
     
     return FlowerClient(cid, net, trainloader, testloader).to_client()

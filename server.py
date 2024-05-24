@@ -4,7 +4,7 @@ import os
 import ray
 
 import gc
-from client import client_fn
+from client import client_fn_femnist, client_fn_EuroSAT
 from typing import Dict, List, Optional, Tuple, Union
 from flwr.server.client_proxy import ClientProxy
 from flwr.common import (
@@ -104,6 +104,11 @@ for file_name in os.listdir("config_files"):
 
         except:
             print("no files to delete")
+        
+        if config_object["TEST_CONFIG"]["dataset"] == "FEMNIST":
+            client_fn = client_fn_femnist
+        if config_object["TEST_CONFIG"]["dataset"] == "EUROSAT":
+            client_fn = client_fn_EuroSAT
         my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
         results = fl.simulation.start_simulation(
             num_clients= int(config_object["TEST_CONFIG"]["clients"]),
