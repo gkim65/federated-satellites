@@ -33,6 +33,7 @@ from Strategies.fedbuff_sat import fedBuffSat
 from Strategies.fedbuff2_sat import fedBuff2Sat
 from Strategies.fedbuff3_sat import fedBuff3Sat
 from Strategies.AutoFLSat import AutoFLSat
+from Strategies.AutoFLSat2 import AutoFLSat2
 
 import pandas as pd
 import wandb
@@ -67,17 +68,20 @@ class FedSatGen(fl.server.strategy.FedAvg):
         self.factor_s = og_s / int(config["n_sat_in_cluster"])
         self.factor_c = og_c / int(config["n_cluster"])
         # choose only satellites that we want
-        if config['alg'] == "AutoFLSat":
+        if config['alg'].startswith("AutoFLSat"):
             self.satellite_access_csv = choose_sat_csv_auto(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
         else:
             self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
         self.satellite_client_list = []
-        self.sim_times_start = [0 for i in range(int(config["n_cluster"]))]
+        self.epochs_list = [0 for i in range(int(config["n_cluster"]))]
         self.sim_times_currents = [0 for i in range(int(config["n_cluster"]))]
         self.cluster_round_starts = [0 for i in range(int(config["n_cluster"]))]
         self.cluster_round_currents = [0 for i in range(int(config["n_cluster"]))]
         self.model_type = "local_cluster"
         self.cluster_num = 0
+        self.epochs_autoFLSat2 = int(config["epochs"])
+        self.start_time_og = 0
+        self.agg_true = False
     
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -244,11 +248,11 @@ class FedSatGen(fl.server.strategy.FedAvg):
             return return_clients
         
         elif config["alg"] == "AutoFLSat":
-            # self.sim_times_start = []
+            # self.epochs_list = []
             # self.sim_times_currents = []
             # self.cluster_round_starts = []
             # self.cluster_round_currents = []
-            chosen_clients, agg_clients, self.counter, self.sim_times_start, self.sim_times_currents, self.cluster_round_starts, self.cluster_round_currents, self.model_type = AutoFLSat(self.satellite_access_csv, 
+            chosen_clients, agg_clients, self.counter, self.epochs_list, self.sim_times_currents, self.cluster_round_starts, self.cluster_round_currents, self.model_type = AutoFLSat(self.satellite_access_csv, 
                                                         self.counter, 
                                                         int(config["clients"]), 
                                                         int(config["client_limit"]), 
@@ -260,7 +264,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                                         clients,
                                                         config["name"],
                                                         config["alg"],
-                                                        self.sim_times_start,
+                                                        self.epochs_list,
                                                         self.sim_times_currents,
                                                         self.cluster_round_starts,
                                                         self.cluster_round_currents,
@@ -286,6 +290,56 @@ class FedSatGen(fl.server.strategy.FedAvg):
                     fit_ins.config["model_type"] = str(self.model_type)
                     fit_ins.config["cluster_identifier"] = str(cluster)
                     fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    return_clients.append((client, deepcopy(fit_ins)))
+                return return_clients
+        
+        elif config["alg"] == "AutoFLSat2":
+            # self.epochs_list = []
+            # self.sim_times_currents = []
+            # self.cluster_round_starts = []
+            # self.cluster_round_currents = []
+            chosen_clients, agg_clients, self.counter, self.epochs_list, self.sim_times_currents, self.cluster_round_starts, self.cluster_round_currents, self.model_type, self.epochs_autoFLSat2, self.start_time_og, self.agg_true  = AutoFLSat2(self.satellite_access_csv, 
+                                                        self.counter, 
+                                                        int(config["clients"]), 
+                                                        int(config["client_limit"]), 
+                                                        int(config["n_sat_in_cluster"]), 
+                                                        int(config["n_cluster"]),
+                                                        self.factor_s, 
+                                                        self.factor_c, 
+                                                        server_round,
+                                                        clients,
+                                                        config["name"],
+                                                        config["alg"],
+                                                        self.epochs_list,
+                                                        self.sim_times_currents,
+                                                        self.cluster_round_starts,
+                                                        self.cluster_round_currents,
+                                                        self.epochs_autoFLSat2,
+                                                        self.start_time_og,
+                                                        self.agg_true )
+            return_clients = []
+            self.satellite_client_list = []
+
+            if self.model_type == "local_cluster":
+                for client,cluster,agg_cluster in chosen_clients:
+                    self.cluster_num = cluster
+                    fit_ins.config["model_type"] = str(self.model_type)
+                    fit_ins.config["duration"] = str(self.epochs_autoFLSat2)
+                    fit_ins.config["cluster_identifier"] = str(cluster)
+                    fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    self.satellite_client_list.append(int(client.cid))
+                    return_clients.append((client, deepcopy(fit_ins)))
+                return return_clients
+            elif self.model_type == "global_cluster":
+                for client,cluster,agg_cluster in chosen_clients:
+                    self.cluster_num = cluster
+                    self.satellite_client_list.append(int(client.cid))
+                
+                for client,cluster,agg_cluster in agg_clients:
+                    fit_ins.config["model_type"] = str(self.model_type)
+                    fit_ins.config["cluster_identifier"] = str(cluster)
+                    fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    fit_ins.config["duration"] = str(self.epochs_autoFLSat2)
                     return_clients.append((client, deepcopy(fit_ins)))
                 return return_clients
                 
@@ -468,7 +522,13 @@ class FedSatGen(fl.server.strategy.FedAvg):
             evaluate_ins.config["cluster_identifier"] = str(self.cluster_num)
             evaluate_ins.config["agg_cluster"] = str(self.cluster_num)
             chosen_clients = [client for client in clients if int(client.cid) in self.satellite_client_list]
+        elif config["alg"] == "AutoFLSat2":
+            evaluate_ins.config["model_update"] = self.model_type
+            evaluate_ins.config["cluster_identifier"] = str(self.cluster_num)
+            evaluate_ins.config["agg_cluster"] = str(self.cluster_num)
+            chosen_clients = [client for client in clients if int(client.cid) in self.satellite_client_list]
         
+
             
         # Return client/config pairs
         return [(client, evaluate_ins) for client in chosen_clients]

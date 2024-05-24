@@ -133,20 +133,31 @@ class FlowerClient(fl.client.NumPyClient):
     name = config['name']
     alg = config['alg']
 
-    if alg == "AutoFLSat":
-      cluster = config['cluster_identifier']
-      agg_cluster = config['agg_cluster']
-      file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
-    else:
-      file_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
-
     folder_name = f'/datasets/{alg}/model_files_{name}/'
-    print(file_name)
+    print(folder_name)
 
     if not os.path.exists(folder_name):
       os.makedirs(folder_name)
+    
+    if alg == "AutoFLSat2":
+      if config['model_update'] == 'global_cluster':
+        for cluster in range(1,int(config['n_cluster'])+1):
+          file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{cluster}.pth'
+          torch.save(self.net.state_dict(), file_name)
+      else:
+        cluster = config['cluster_identifier']
+        agg_cluster = config['agg_cluster']
+        file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+        torch.save(self.net.state_dict(), file_name)
 
-    torch.save(self.net.state_dict(), file_name)
+    else:
+      if alg == "AutoFLSat":
+        cluster = config['cluster_identifier']
+        agg_cluster = config['agg_cluster']
+        file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+      else:
+        file_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
+      torch.save(self.net.state_dict(), file_name)
 
   def fit(self, parameters, config):
     name = config['name']
@@ -181,7 +192,7 @@ class FlowerClient(fl.client.NumPyClient):
       print("work pls: "+str(config['model_update']))
 
       # delete mid models of other clusters after agg
-      if config['model_update'] == 'global_cluster':
+      if config['model_update'] == 'global_cluster' and config['alg'] == "AutoFLSat":
         name = config['name']
         alg = config['alg']
         cluster_n = config['n_cluster']

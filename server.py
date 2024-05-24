@@ -41,7 +41,7 @@ for file_name in os.listdir("config_files"):
     #     url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
     #     gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
     # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
-    t_name = "testing"
+    t_name = "AutoFLSat2_5_24_"#"testing"
     for keys in config_object["TEST_CONFIG"].keys():
         print(keys)
         if keys != "sim_fname" and keys != "gs_locations" and keys != "slrum"  and keys != "client_cpu"  and keys != "client_gpu":
