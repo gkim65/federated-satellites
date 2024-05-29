@@ -20,6 +20,9 @@ from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST
 # EuroSAT specific
 from EUROSAT.data import EuroSATNet, load_EUROSAT
 
+# CIFAR10 specific
+from CIFAR.cifar10data import CIFAR10_Net, load_data_CIFAR10
+
 # #############################################################################
 # Checking for Client Resources
 # #############################################################################
@@ -255,3 +258,22 @@ def client_fn_EuroSAT(cid: int) -> FlowerClient:
     trainloader, testloader = load_EUROSAT(cid)
     
     return FlowerClient(cid, net, trainloader, testloader).to_client()
+
+def client_fn_CIFAR10(cid: int) -> FlowerClient:
+  # Load model and data (simple CNN, CIFAR-10)
+
+  print("MADE CLIENT")
+  if torch.cuda.is_available():
+      print ("GPU CUDA")
+      DEVICE = torch.device("cuda")
+  elif torch.backends.mps.is_available():
+      print ("MPS device")
+      DEVICE = torch.device("mps")
+  else:
+      print ("MPS device not found, using CPU")
+      DEVICE = torch.device("cpu")
+
+
+  net = CIFAR10_Net().to(DEVICE)
+  trainloader, testloader = load_data_CIFAR10(cid)
+  return FlowerClient(cid, net, trainloader, testloader).to_client()
