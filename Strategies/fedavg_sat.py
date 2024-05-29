@@ -2,6 +2,7 @@ import numpy as np
 import wandb
 ###################    FedAvgSat   ########################
 
+
 def fedAvgSat(sat_df, 
               counter, 
               client_n, 
@@ -10,7 +11,8 @@ def fedAvgSat(sat_df,
               factor_s, 
               factor_c, 
               server_round,
-              clients):
+              clients,
+              epochs):
 
     # Track starting time for reaching out to satellites
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
@@ -46,12 +48,15 @@ def fedAvgSat(sat_df,
             client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
         
         # Track every single pass of every client satellite
-        client_list[client_id] += 1
+        if client_list[client_id] != -1:
+            client_list[client_id] += 1
 
         # Track when the first 10 satellites that made contact reach back to a groundstation to give their information
-        if client_list[client_id] == 2 and (client_id in client_twice):
+        current_time_diff = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+        if ((current_time_diff > (epochs* 60 * 5)) and (client_list[client_id] >= 2) and (client_id in client_twice)):
             done_count +=1
             client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
+            client_list[client_id] = -1
         
         # Going through the csv rows
         counter += 1
@@ -62,12 +67,14 @@ def fedAvgSat(sat_df,
     print(client_time_list)
 
     # Track when we finish reach out to all satellites
-    stop_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
+    stop_time_sec = sat_df['End Time Seconds Cumulative'].iloc[counter]
     
     # Caculate idle time totals and averages
-    for time in client_time_list:
-        idle_time_total += (stop_time_sec - start_time_sec)-(10* 60 * 5)  
+    idle_time_total = client_n * (stop_time_sec - start_time_sec)
+    for i in range(limit):
+        idle_time_total = idle_time_total - (epochs* 60 * 5)
     idle_time_avg = idle_time_total/client_n
+    
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 
                "server_round": server_round,

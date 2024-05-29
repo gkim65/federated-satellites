@@ -18,6 +18,7 @@ def AutoFLSat2(sat_df,
               clients,
               name,
               alg,
+              config_epochs,
               epochs_list, # not needed
               sim_times_currents,
               cluster_round_starts,
@@ -77,7 +78,7 @@ def AutoFLSat2(sat_df,
                                                                     cluster_n,
                                                                     factor_c,
                                                                     start_time_og,
-                                                                    10*60*5)
+                                                                    int(config_epochs)+120)
                 # return nubmer of epochs, as well as counter number to start from
                 # next time, and 
         
@@ -266,8 +267,9 @@ def scheduleISL(sat_df,
 
     for cluster_id_1 in range(1,cluster_n+1):
         for cluster_id_2 in range(cluster_id_1+1,cluster_n+1):
-            idle_time += start_times[cluster_id_1,cluster_id_2]-new_start_time
-            idle_time += end_times[cluster_id_1,cluster_id_2]-new_end_time
+            idle_time += start_times[cluster_id_1,cluster_id_2] - new_start_time
+            idle_time += new_end_time - end_times[cluster_id_1,cluster_id_2]
+            idle_time += end_times[cluster_id_1,cluster_id_2] - start_times[cluster_id_1,cluster_id_2] - epochs
 
 
     counter = count_middle  

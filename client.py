@@ -49,9 +49,13 @@ def train(net, trainloader, config, cid):
 
 
     if 'duration' in config:
-      total_epochs = int (float(config['duration']) / 60 / 5)
-      if total_epochs > 500:
-        total_epochs = 500
+      total_epochs = int (float(config['duration'])-120) # / 60 / 5)
+      if total_epochs > int(config['epochs']):
+        total_epochs = int(config['epochs'])
+      elif total_epochs < 0:
+        total_epochs = 0
+      if config['dataset'] == "EUROSAT":
+        total_epochs = int(total_epochs/10)
     else:
       if 'model_type' in config:
         if config['model_type'] == "local_cluster":

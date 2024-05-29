@@ -27,8 +27,8 @@ from Strategies.fedavg_sat import fedAvgSat
 from Strategies.fedavg2_sat import fedAvg2Sat
 from Strategies.fedavg3_sat import fedAvg3Sat
 from Strategies.fedprox_sat import fedProxSat
-from Strategies.fedprox2_sat import fedProx2Sat
-from Strategies.fedprox3_sat import fedProx3Sat
+from Strategies.fedprox2_sat import fedProx2Sat, fedProx22Sat
+from Strategies.fedprox3_sat import fedProx3Sat, fedProx32Sat
 from Strategies.fedbuff_sat import fedBuffSat
 from Strategies.fedbuff2_sat import fedBuff2Sat
 from Strategies.fedbuff3_sat import fedBuff3Sat
@@ -112,7 +112,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_s,
                                        self.factor_c,
                                        server_round,
-                                       clients)
+                                       clients,
+                                       int(config["epochs"]))
         elif config["alg"] == "fedAvg2Sat":
             chosen_clients, self.counter = fedAvg2Sat(self.satellite_access_csv, 
                                        self.counter,
@@ -122,7 +123,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_s,
                                        self.factor_c,
                                        server_round,
-                                       clients)
+                                       clients,
+                                       int(config["epochs"]))
         elif config["alg"] == "fedAvg3Sat":
             chosen_clients, self.counter = fedAvg3Sat(self.satellite_access_csv, 
                                         self.counter,
@@ -166,6 +168,22 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 fit_ins.config["duration"] = str(time)
                 return_clients.append((client, deepcopy(fit_ins)))
             return return_clients
+        elif config["alg"] == "fedProx22Sat":
+            chosen_clients_times, self.counter = fedProx22Sat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients,
+                                       int(config["epochs"]))
+            return_clients = []
+            for client,time in chosen_clients_times:
+                fit_ins.config["duration"] = str(time)
+                return_clients.append((client, deepcopy(fit_ins)))
+            return return_clients
         
         elif config["alg"] == "fedProx3Sat":
             chosen_clients_times, self.counter = fedProx3Sat(self.satellite_access_csv, 
@@ -185,6 +203,23 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 return_clients.append((client, deepcopy(fit_ins)))
             return return_clients
 
+        elif config["alg"] == "fedProx32Sat":
+            chosen_clients_times, self.counter = fedProx32Sat(self.satellite_access_csv, 
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["epochs"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                fit_ins.config["duration"] = str(time)
+                return_clients.append((client, deepcopy(fit_ins)))
+            return return_clients
         elif config["alg"] == "fedBuffSat":
             self.satellite_client_list = []
             chosen_clients_times, self.counter = fedBuffSat(self.satellite_access_csv, 
@@ -310,6 +345,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                                         clients,
                                                         config["name"],
                                                         config["alg"],
+                                                        config["epochs"],
                                                         self.epochs_list,
                                                         self.sim_times_currents,
                                                         self.cluster_round_starts,
@@ -388,7 +424,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_s,
                                        self.factor_c,
                                        server_round,
-                                       clients)
+                                       clients,
+                                       int(config["epochs"]))
         elif config["alg"] == "fedAvg2Sat":
             chosen_clients, self.counter = fedAvg2Sat(self.satellite_access_csv, 
                                        self.counter,
@@ -398,7 +435,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                        self.factor_s,
                                        self.factor_c,
                                        server_round,
-                                       clients)
+                                       clients,
+                                       int(config["epochs"]))
         elif config["alg"] == "fedAvg3Sat":
             chosen_clients, self.counter = fedAvg3Sat(self.satellite_access_csv, 
                                         self.counter,
@@ -441,8 +479,45 @@ class FedSatGen(fl.server.strategy.FedAvg):
                 evaluate_ins.config["duration"] = str(time)
                 return_clients.append((client, deepcopy(evaluate_ins)))
             return return_clients
+
+        elif config["alg"] == "fedProx22Sat":
+            chosen_clients_times, self.counter = fedProx22Sat(self.satellite_access_csv, 
+                                       self.counter,
+                                       int(config["clients"]),
+                                       int(config["client_limit"]),
+                                       int(config["n_sat_in_cluster"]),
+                                       self.factor_s,
+                                       self.factor_c,
+                                       server_round,
+                                       clients,
+                                       int(config["epochs"]))
+            return_clients = []
+            for client,time in chosen_clients_times:
+                evaluate_ins.config["duration"] = str(time)
+                return_clients.append((client, deepcopy(evaluate_ins)))
+            return return_clients
+
+
         elif config["alg"] == "fedProx3Sat":
             chosen_clients_times, self.counter = fedProx3Sat(self.satellite_access_csv, 
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["epochs"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients)
+            return_clients = []
+            for client,time in chosen_clients_times:
+                evaluate_ins.config["duration"] = str(time)
+                return_clients.append((client, deepcopy(evaluate_ins)))
+            return return_clients
+        
+        elif config["alg"] == "fedProx32Sat":
+            chosen_clients_times, self.counter = fedProx32Sat(self.satellite_access_csv, 
                                         self.counter,
                                         int(config["clients"]),
                                         int(config["client_limit"]),

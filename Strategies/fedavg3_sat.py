@@ -51,12 +51,18 @@ def fedAvg3Sat(sat_df,
             client_list[client_id] += 1
             cluster_list[cluster_id,satellite_id] += 1
 
+
+        # Track every single pass of every client satellite
+        if client_list[client_id] != -1:
+            client_list[client_id] += 1
+
         # If first time joining training line, track when they start
         if client_time_list[client_id] == 0:
             client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
 
+        current_time_diff = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
         # If the satellite sees groundstation twice and we don't already meet limit of clients
-        if client_list[client_id] == 2 and len(client_twice) < limit:
+        if (current_time_diff > (epoch_min* 60 * 5)) and (client_list[client_id] >= 2) and len(client_twice) < limit:
             client_twice.append(client_id)
             client_list[client_id] = -1
             cluster_list[cluster_id,satellite_id] = 0
@@ -96,10 +102,12 @@ def fedAvg3Sat(sat_df,
 
     # Track when we finish reach out to all satellites
     stop_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
-    
+
     # Caculate idle time totals and averages
     for time in client_time_list:
-        idle_time_total += (stop_time_sec - start_time_sec)-(10* 60 * 5)   
+        x = ((stop_time_sec - start_time_sec)-(epoch_min* 60 * 5))   
+        if x > 0:
+            idle_time_total += x
     idle_time_avg = idle_time_total/client_n
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 

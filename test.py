@@ -11,12 +11,17 @@ def search_and_replace(file_path, search_word, replace_word):
    with open(file_path, 'w') as file:
       file.write(updated_contents)
 
-for i in range(18):
+for i in range(1,12):
    
-    if os.path.exists("server"+str(i)+".py"):
-        search_word = r'"test"#"WorkFP_5_03"'
-        replace_word = r'"WorkFP_5_03"'
-        search_and_replace("server"+str(i)+".py", search_word, replace_word)
+    # if os.path.exists("server"+str(i)+".py"):
+    if os.path.exists("config_files11/config_"+str(i)+".ini"):
+        # search_word = r'"WorkFP_5_11"'
+        search_word = "client_cpu = 4"
+        replace_word = "client_cpu = 2"
+
+        # replace_word = r'"WorkFB_5_21"'
+        # search_and_replace("server"+str(i)+".py", search_word, replace_word)
+        search_and_replace("config_files11/config_"+str(i)+".ini", search_word, replace_word)
         
 ### SAVE INTO DIFFERENT FILES:
 """
