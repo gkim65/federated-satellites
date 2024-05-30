@@ -274,6 +274,7 @@ def client_fn_CIFAR10(cid: int) -> FlowerClient:
       DEVICE = torch.device("cpu")
 
 
-  net = CIFAR10_Net().to(DEVICE)
+  # net = CIFAR10_Net().to(DEVICE)
+  net = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=False).to(DEVICE)
   trainloader, testloader = load_data_CIFAR10(cid)
   return FlowerClient(cid, net, trainloader, testloader).to_client()
