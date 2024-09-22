@@ -14,7 +14,7 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 !slrum_fed_sats.sh
 !slrum_interact.sh
 !server.py
-
+/datasets
 *.pkl
 *model_files_*
 

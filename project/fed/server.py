@@ -4,7 +4,7 @@ import os
 import ray
 
 import gc
-from client import client_fn_femnist, client_fn_EuroSAT,client_fn_CIFAR10
+from project.client.client import client_fn_femnist, client_fn_EuroSAT,client_fn_CIFAR10
 from typing import Dict, List, Optional, Tuple, Union
 from flwr.server.client_proxy import ClientProxy
 from flwr.common import (
@@ -15,13 +15,14 @@ from flwr.common import (
 import numpy as np
 import pandas as pd
 
-from Strategies.fedsat_gen import FedSatGen
+from project.fed.strategies.fedsat_gen import FedSatGen
 
 from configparser import ConfigParser
 import shutil
 
 import wandb
 import gdown
+from pathlib import Path
 
 # #############################################################################
 # Federating pipeline with Flower
@@ -34,6 +35,7 @@ for file_name in os.listdir("config_files"):
     # Read config.ini file
     config_object = ConfigParser()
     config_object.read("config_files/"+file_name)
+
 
     # TODO: Bring back in the future but for now accessing from the datasets
     # if not os.path.exists(config_object["TEST_CONFIG"]["sim_fname"]):
@@ -114,7 +116,7 @@ for file_name in os.listdir("config_files"):
             my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
             results = fl.simulation.start_simulation(
                 num_clients= int(config_object["TEST_CONFIG"]["clients"]),
-                clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
+                # clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
                 client_fn=client_fn,
                 config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
                 

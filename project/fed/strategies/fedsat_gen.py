@@ -22,18 +22,18 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from Strategies.utils import choose_sat_csv , choose_sat_csv_auto
-from Strategies.fedavg_sat import fedAvgSat
-from Strategies.fedavg2_sat import fedAvg2Sat
-from Strategies.fedavg3_sat import fedAvg3Sat
-from Strategies.fedprox_sat import fedProxSat
-from Strategies.fedprox2_sat import fedProx2Sat, fedProx22Sat
-from Strategies.fedprox3_sat import fedProx3Sat, fedProx32Sat
-from Strategies.fedbuff_sat import fedBuffSat
-from Strategies.fedbuff2_sat import fedBuff2Sat
-from Strategies.fedbuff3_sat import fedBuff3Sat
-from Strategies.AutoFLSat import AutoFLSat
-from Strategies.AutoFLSat2 import AutoFLSat2
+from project.fed.strategies.utils import choose_sat_csv , choose_sat_csv_auto
+from project.fed.strategies.fedavg_sat import fedAvgSat
+from project.fed.strategies.fedavg2_sat import fedAvg2Sat
+from project.fed.strategies.fedavg3_sat import fedAvg3Sat
+from project.fed.strategies.fedprox_sat import fedProxSat
+from project.fed.strategies.fedprox2_sat import fedProx2Sat, fedProx22Sat
+from project.fed.strategies.fedprox3_sat import fedProx3Sat, fedProx32Sat
+from project.fed.strategies.fedbuff_sat import fedBuffSat
+from project.fed.strategies.fedbuff2_sat import fedBuff2Sat
+from project.fed.strategies.fedbuff3_sat import fedBuff3Sat
+from project.fed.strategies.AutoFLSat import AutoFLSat
+from project.fed.strategies.AutoFLSat2 import AutoFLSat2
 
 import pandas as pd
 import wandb
@@ -44,7 +44,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
         self,
         *,
         on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        satellite_access_csv: "/datasets/landsat/10s_10c_s_landsat.csv",
+        satellite_access_csv: "datasets/landsat/10s_10c_s_landsat.csv",
         time_wait: 7
     ) -> None:
 

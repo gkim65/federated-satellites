@@ -66,7 +66,7 @@ def AutoFLSat2(sat_df,
             for client in [i for i in range(sat_n*cluster_n)]:
                 cluster_clients.append(client)
             
-            x = [[client,1,1] for client in clients if int(client.cid) in cluster_clients]
+            x = [[client,1,1] for client in clients if int(client.partition_id) in cluster_clients]
             agg_true = False
             return x, y, counter, epochs_list, sim_times_currents, cluster_round_starts, cluster_round_currents, "global_cluster", epochs, start_time_og, agg_true
         
@@ -129,7 +129,7 @@ def AutoFLSat2(sat_df,
         # print(cluster_clients)
 
     
-        x = [[client,cluster,cluster] for client in clients if int(client.cid) in cluster_clients]
+        x = [[client,cluster,cluster] for client in clients if int(client.partition_id) in cluster_clients]
 
         return x, x, counter, epochs_list, sim_times_currents, cluster_round_starts, cluster_round_currents, "local_cluster", epochs, start_time_og, agg_true
         

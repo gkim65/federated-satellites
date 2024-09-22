@@ -1,9 +1,9 @@
 import numpy as np
 import wandb
-###################    FedAvgSat   ########################
 
+###################    FedProxSat   ########################
 
-def fedAvgSat(sat_df, 
+def fedProxSat(sat_df, 
               counter, 
               client_n, 
               client_max, 
@@ -11,8 +11,7 @@ def fedAvgSat(sat_df,
               factor_s, 
               factor_c, 
               server_round,
-              clients,
-              epochs):
+              clients):
 
     # Track starting time for reaching out to satellites
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
@@ -48,15 +47,12 @@ def fedAvgSat(sat_df,
             client_time_list[client_id] = sat_df['Start Time Seconds Cumulative'].iloc[counter]
         
         # Track every single pass of every client satellite
-        if client_list[client_id] != -1:
-            client_list[client_id] += 1
+        client_list[client_id] += 1
 
         # Track when the first 10 satellites that made contact reach back to a groundstation to give their information
-        current_time_diff = sat_df['Start Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
-        if ((current_time_diff > (epochs* 60 * 5)) and (client_list[client_id] >= 2) and (client_id in client_twice)):
+        if client_list[client_id] == 2 and (client_id in client_twice):
             done_count +=1
             client_time_list[client_id] = sat_df['End Time Seconds Cumulative'].iloc[counter] - client_time_list[client_id]
-            client_list[client_id] = -1
         
         # Going through the csv rows
         counter += 1
@@ -67,14 +63,12 @@ def fedAvgSat(sat_df,
     print(client_time_list)
 
     # Track when we finish reach out to all satellites
-    stop_time_sec = sat_df['End Time Seconds Cumulative'].iloc[counter]
+    stop_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
     
     # Caculate idle time totals and averages
-    idle_time_total = client_n * (stop_time_sec - start_time_sec)
-    for i in range(limit):
-        idle_time_total = idle_time_total - (epochs* 60 * 5)
+    for time in client_time_list:
+        idle_time_total += (stop_time_sec - start_time_sec)-time
     idle_time_avg = idle_time_total/client_n
-    
     wandb.log({"start_time_sec": start_time_sec, 
                "stop_time_sec": stop_time_sec, 
                "server_round": server_round,
@@ -82,6 +76,8 @@ def fedAvgSat(sat_df,
                "idle_time_total": idle_time_total,
                "idle_time_avg": idle_time_avg})
 
-    x = [client for client in clients if int(client.cid) in client_twice]
+    # this is the only thing that differs for fedprox, now we send durations too
+    # most changes are in client
+    x = [(client,client_time_list[int(client.partition_id)]) for client in clients if int(client.partition_id) in client_twice]
 
     return x, counter

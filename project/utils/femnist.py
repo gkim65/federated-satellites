@@ -2,6 +2,7 @@
 
 import csv
 from pathlib import Path
+import os
 from typing import Any
 from collections.abc import Callable, Sequence
 
@@ -19,24 +20,28 @@ from torch.utils.data import Dataset
 from torchvision.transforms import Compose, ToTensor, Normalize
 from torch.utils.data import DataLoader
 
+from project.utils.datasets import build_dataHomeFolder
+
+
 def download_femnist():
     """
     Download and extract the femnist dataset if not already present
     """
-    #  Download compressed dataset
-    print(Path('./femnist.tar.gz').exists())
-    if not Path('./femnist.tar.gz').exists():
-        file_id = '1MeYgT9qQp973EP7kXnM9KTDGo1-qeuC6'
-        gdown.download(
-            f'https://drive.google.com/uc?export=download&confirm=pbef&id={file_id}',
-            './femnist.tar.gz',
-        )
 
-    # Decompress dataset
-    if not Path('./femnist').exists():
+    folder_name = build_dataHomeFolder()
+
+    if not os.path.exists(folder_name+'femnist'):
+        #  Download compressed dataset
+        if not os.path.exists(folder_name+'femnist.tar.gz'):
+            url = "https://drive.google.com/file/d/1dv_HYErdIaJoUUIyapD3FMo-mDoAuFBA/view?usp=sharing"
+            gdown.download(url, folder_name+'femnist.tar.gz', fuzzy=True)
+
+        # Decompress dataset
         print('Extracting FEMNIST data...')
-        subprocess.run('tar -xzf ./femnist.tar.gz'.split(), check=True, capture_output=True)
-        print('FEMNIST dataset extracted in ./femnist/data')
+        text = 'tar -xzf '+folder_name+'femnist.tar.gz'
+        subprocess.run(text.split(), check=True, capture_output=True)
+        print('FEMNIST dataset extracted in '+folder_name+'femnist/data')
+        os.remove(folder_name+'femnist.tar.gz')
 
 
 class FemnistDataset(Dataset):
@@ -60,9 +65,9 @@ class FemnistDataset(Dataset):
                     transform function to be applied to the label.
         """
         # TODO: find ways to make this not changed for my mac
-        self.data_dir = Path('/datasets/femnist/data') #Path('FEMNIST_tests/femnist/data')
+        self.data_dir = Path('datasets/femnist/data') #Path('FEMNIST_tests/femnist/data')
         self.client = client
-        self.mapping_dir = Path('/datasets/femnist/client_data_mappings/fed_natural') #Path('FEMNIST_tests/femnist/client_data_mappings/fed_natural')
+        self.mapping_dir = Path('datasets/femnist/client_data_mappings/fed_natural') #Path('FEMNIST_tests/femnist/client_data_mappings/fed_natural')
         self.split = split
 
 
@@ -88,7 +93,7 @@ class FemnistDataset(Dataset):
             if not full_sample_path.exists():
                 raise ValueError(f"Required files do not exist, path: {full_sample_path}")
         except:
-            self.data_dir = Path('../datasets/femnist/data')
+            self.data_dir = Path('datasets/femnist/data')
             full_sample_path: Path =  self.data_dir / self.split / sample_path
             if not full_sample_path.exists():
                 raise ValueError(f"Required files do not exist, path: {full_sample_path}")
@@ -131,20 +136,20 @@ class FemnistDataset(Dataset):
             if not preprocessed_path.exists():
                 raise ValueError(f"Required files do not exist, path: {preprocessed_path}")
         except:
-            self.mapping_dir = Path('../datasets/femnist/client_data_mappings/fed_natural')
+            self.mapping_dir = Path('datasets/femnist/client_data_mappings/fed_natural')
             preprocessed_path: Path = (self.mapping_dir / self.client / self.split).with_suffix(".pt")
             if not preprocessed_path.exists():
                 raise ValueError(f"Required files do not exist, path: {preprocessed_path}")
 
         if preprocessed_path.exists():
-            return torch.load(preprocessed_path)
+            return torch.load(preprocessed_path, weights_only=True)
         else:
             try:
                 csv_path = (self.mapping_dir / self.client / self.split).with_suffix(".csv")
                 if not csv_path.exists():
                     raise ValueError(f"Required files do not exist, path: {csv_path}")
             except:
-                self.mapping_dir = Path('../datasets/femnist/client_data_mappings/fed_natural')
+                self.mapping_dir = Path('datasets/femnist/client_data_mappings/fed_natural')
                 csv_path = (self.mapping_dir / self.client / self.split).with_suffix(".csv")
                 if not csv_path.exists():
                     raise ValueError(f"Required files do not exist, path: {csv_path}")

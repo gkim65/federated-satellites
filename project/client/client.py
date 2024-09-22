@@ -2,6 +2,8 @@ from collections import OrderedDict
 import warnings
 
 import flwr as fl
+from flwr.common import Context
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,19 +11,20 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
 
+
 # from grace:
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-# Femnist specific
-from FEMNIST_tests.femnist import FemnistDataset, FemnistNet, load_FEMNIST
+# FEMNIST specific
+from project.utils.femnist import FemnistDataset, FemnistNet, load_FEMNIST
 
 # EuroSAT specific
-from EUROSAT.data import EuroSATNet, load_EUROSAT
+from project.utils.eurosat import EuroSATNet, load_EUROSAT
 
 # CIFAR10 specific
-from CIFAR.cifar10data import CIFAR10_Net, load_data_CIFAR10
+from project.utils.cifar10data import CIFAR10_Net, load_data_CIFAR10
 
 # #############################################################################
 # Checking for Client Resources
@@ -43,7 +46,7 @@ else:
 # Training Loop
 # #############################################################################
 
-def train(net, trainloader, config, cid):
+def train(net, trainloader, config, partition_id):
     """Train the model on the training set."""
 
     criterion_mean = torch.nn.CrossEntropyLoss()
@@ -120,12 +123,12 @@ def test(net, testloader):
 # Define Flower client
 class FlowerClient(fl.client.NumPyClient):
   def __init__(self,
-                 cid: int,
+                 partition_id: int,
                  net: nn.Module,
                  trainloader: DataLoader,
                  testloader: DataLoader):
         
-        self.cid = cid
+        self.partition_id = partition_id
         self.net = net
         self.trainloader = trainloader
         self.testloader = testloader
@@ -142,7 +145,7 @@ class FlowerClient(fl.client.NumPyClient):
     name = config['name']
     alg = config['alg']
 
-    folder_name = f'/datasets/{alg}/model_files_{name}/'
+    folder_name = f'datasets/{alg}/model_files_{name}/'
     print(folder_name)
 
     if not os.path.exists(folder_name):
@@ -151,21 +154,21 @@ class FlowerClient(fl.client.NumPyClient):
     if alg == "AutoFLSat2":
       if config['model_update'] == 'global_cluster':
         for cluster in range(1,int(config['n_cluster'])+1):
-          file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{cluster}.pth'
+          file_name = f'datasets/{alg}/model_files_{name}/{cluster}_{cluster}.pth'
           torch.save(self.net.state_dict(), file_name)
       else:
         cluster = config['cluster_identifier']
         agg_cluster = config['agg_cluster']
-        file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+        file_name = f'datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
         torch.save(self.net.state_dict(), file_name)
 
     else:
       if alg == "AutoFLSat":
         cluster = config['cluster_identifier']
         agg_cluster = config['agg_cluster']
-        file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+        file_name = f'datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
       else:
-        file_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
+        file_name = f'datasets/{alg}/model_files_{name}/{self.partition_id}.pth'
       torch.save(self.net.state_dict(), file_name)
 
   def fit(self, parameters, config):
@@ -177,19 +180,19 @@ class FlowerClient(fl.client.NumPyClient):
     if alg == "AutoFLSat":
       cluster = config['cluster_identifier']
       agg_cluster = config['agg_cluster']
-      auto_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+      auto_name = f'datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
     else:
-      buff_name = f'/datasets/{alg}/model_files_{name}/{self.cid}.pth'
+      buff_name = f'datasets/{alg}/model_files_{name}/{self.partition_id}.pth'
     # check if there is a local model saved to the disk, if so use that (FedBuff)
 
     if os.path.exists(buff_name) and config['alg'].startswith("FedBuff"):
-      self.net.load_state_dict(torch.load(buff_name))
+      self.net.load_state_dict(torch.load(buff_name, weights_only=True))
     elif os.path.exists(auto_name) and config['alg'].startswith("AutoFLSat"):
-      self.net.load_state_dict(torch.load(auto_name))
+      self.net.load_state_dict(torch.load(auto_name, weights_only=True))
     else:
       self.set_parameters(parameters)
 
-    train(self.net, self.trainloader, config, self.cid)
+    train(self.net, self.trainloader, config, self.partition_id)
 
     return self.get_parameters(config={}), len(self.trainloader.dataset), {}
 
@@ -197,7 +200,7 @@ class FlowerClient(fl.client.NumPyClient):
     self.set_parameters(parameters)
     if 'model_update' in config:
       self.save_local_model(config)
-      print(self.cid)
+      print(self.partition_id)
       print("work pls: "+str(config['model_update']))
 
       # delete mid models of other clusters after agg
@@ -209,7 +212,7 @@ class FlowerClient(fl.client.NumPyClient):
 
         for agg_cluster in range(1,int(cluster_n)+1):
             if int(cluster) != int(agg_cluster):
-              file_name = f'/datasets/{alg}/model_files_{name}/{cluster}_{str(agg_cluster)}.pth'
+              file_name = f'datasets/{alg}/model_files_{name}/{cluster}_{str(agg_cluster)}.pth'
               if os.path.exists(file_name):
                 os.remove(file_name)
                 print(file_name)
@@ -218,7 +221,7 @@ class FlowerClient(fl.client.NumPyClient):
     loss, accuracy = test(self.net, self.testloader)
     return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
 
-def client_fn_femnist(cid: int) -> FlowerClient:
+def client_fn_femnist(context: Context) -> FlowerClient:
 
     # Load model and data
     print("MADE CLIENT")
@@ -233,11 +236,12 @@ def client_fn_femnist(cid: int) -> FlowerClient:
         DEVICE = torch.device("cpu")
         
     net = FemnistNet().to(DEVICE)
-    trainloader, testloader = load_FEMNIST(cid)
+    partition_id = context.node_config["partition-id"]
+    trainloader, testloader = load_FEMNIST(partition_id)
     
-    return FlowerClient(cid, net, trainloader, testloader).to_client()
+    return FlowerClient(partition_id, net, trainloader, testloader).to_client()
 
-def client_fn_EuroSAT(cid: int) -> FlowerClient:
+def client_fn_EuroSAT(partition_id: int) -> FlowerClient:
 
     # Load model and data
     print("MADE CLIENT")
@@ -255,11 +259,11 @@ def client_fn_EuroSAT(cid: int) -> FlowerClient:
 
 
     net = EuroSATNet().to(DEVICE)
-    trainloader, testloader = load_EUROSAT(cid)
+    trainloader, testloader = load_EUROSAT(partition_id)
     
-    return FlowerClient(cid, net, trainloader, testloader).to_client()
+    return FlowerClient(partition_id, net, trainloader, testloader).to_client()
 
-def client_fn_CIFAR10(cid: int) -> FlowerClient:
+def client_fn_CIFAR10(partition_id: int) -> FlowerClient:
   # Load model and data (simple CNN, CIFAR-10)
 
   print("MADE CLIENT")
@@ -276,5 +280,5 @@ def client_fn_CIFAR10(cid: int) -> FlowerClient:
 
   # net = CIFAR10_Net().to(DEVICE)
   net = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=False).to(DEVICE)
-  trainloader, testloader = load_data_CIFAR10(cid)
-  return FlowerClient(cid, net, trainloader, testloader).to_client()
+  trainloader, testloader = load_data_CIFAR10(partition_id)
+  return FlowerClient(partition_id, net, trainloader, testloader).to_client()
