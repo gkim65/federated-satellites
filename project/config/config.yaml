@@ -1,6 +1,9 @@
 # FL Specific Parameters:
-round: 1500
-epochs: 10
+fl:
+  round: 1500
+  epochs: 10
+  client_cpu: 1
+  client_gpu: 0
 
 # For posterity since no seed is set, run multiple trials (typically 5) of same run
 trial: 1
@@ -30,16 +33,25 @@ csv:
   # make sure to set # of sat in cluster and # of cluster same os your csv file name, or a multiple of the number itself
   n_sat_in_cluster: 10
   n_cluster: 3
-name: all_gs4
-clients: 30
-client_limit: 10
-learning_rate: 0.001
-momentum: 0.9
-wait_time: 7
+  clients: n_cluster*n_sat_in_cluster
+  # Just typically keep to 10
+  client_limit: 10
+  # take out names of ground stations we don't want
+  gs_locations: "[Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]"
 
+# Name of run for easier processing later
+name: all_gs4
+
+# ML things
+ml:
+  learning_rate: 0.001
+  momentum: 0.9
+  # may be able to delete
+  wait_time: 7
+
+# TODO: Check if i still need this
 slrum: y
-client_cpu: 1
-client_gpu: 0
+
+# TODO: Specific to Proximal Term (I need to get reminded of this)
 prox_term: 2
-gs_locations: [Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]
 
