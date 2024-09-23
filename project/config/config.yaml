@@ -1,0 +1,45 @@
+# FL Specific Parameters:
+round: 1500
+epochs: 10
+
+# For posterity since no seed is set, run multiple trials (typically 5) of same run
+trial: 1
+
+# Dataset, can use FEMNIST, EUROSAT, CIFAR10 
+dataset: "FEMNIST"
+
+# Algorithm (Currently list from:)
+# - "fedAvgSat"
+# - "fedAvg2Sat" (with scheduling)
+# - "fedAvg3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
+# - "fedProxSat"
+# - "fedProx2Sat" (with scheduling)
+# - "fedProx3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
+# - "fedBuffSat"
+# - "fedBuff2Sat" (with scheduling)
+# - "fedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
+# - "AutoFLSat" (still has bugs)
+# - "AutoFL2Sat" (Proper hierarchical framework)
+alg: "AutoFLSat2"
+
+# STK specific parmeters 
+csv:
+  # after downloading datasets using the download_datasets.sh file, find these csvs in datasets/landsat folder
+  # files with _inter is for AutoFLSat, files without are for all other spacified algorithms 
+  sim_fname: datasets/landsat/10s_3c_s_landsat_star_inter.csv
+  # make sure to set # of sat in cluster and # of cluster same os your csv file name, or a multiple of the number itself
+  n_sat_in_cluster: 10
+  n_cluster: 3
+name: all_gs4
+clients: 30
+client_limit: 10
+learning_rate: 0.001
+momentum: 0.9
+wait_time: 7
+
+slrum: y
+client_cpu: 1
+client_gpu: 0
+prox_term: 2
+gs_locations: [Sioux_Falls,Sanya,Johannesburg,Cordoba,Tromso,Kashi,Beijing,Neustrelitz,Parepare,Alice_Springs,Fairbanks,Prince_Albert,Shadnagar]
+
