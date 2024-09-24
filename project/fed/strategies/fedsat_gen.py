@@ -73,7 +73,6 @@ class FedSatGen(fl.server.strategy.FedAvg):
             self.satellite_access_csv = choose_sat_csv_auto(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]))
         else:
             self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
-        print(self.satellite_access_csv)
         self.satellite_client_list = []
         self.epochs_list = [0 for i in range(int(config["n_cluster"]))]
         self.sim_times_currents = [0 for i in range(int(config["n_cluster"]))]
