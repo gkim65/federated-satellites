@@ -53,7 +53,8 @@ def train(net, trainloader, config, partition_id):
     optimizer = torch.optim.SGD(net.parameters(), lr=float(config["learning_rate"]), momentum=float(config["momentum"]))
     net.train() 
 
-
+    print(config["data_rate"])
+    print(config["power_consumption_per_epoch"])
     if 'duration' in config:
       total_epochs = int (float(config['duration'])-120) # / 60 / 5)
       if total_epochs > int(config['epochs']):
@@ -127,7 +128,6 @@ class FlowerClient(fl.client.NumPyClient):
                  net: nn.Module,
                  trainloader: DataLoader,
                  testloader: DataLoader):
-        
         self.partition_id = partition_id
         self.net = net
         self.trainloader = trainloader
@@ -172,6 +172,7 @@ class FlowerClient(fl.client.NumPyClient):
       torch.save(self.net.state_dict(), file_name)
 
   def fit(self, parameters, config):
+
     name = config['name']
     alg = config['alg']
     buff_name = ""
@@ -191,12 +192,12 @@ class FlowerClient(fl.client.NumPyClient):
       self.net.load_state_dict(torch.load(auto_name, weights_only=True))
     else:
       self.set_parameters(parameters)
-
     train(self.net, self.trainloader, config, self.partition_id)
 
     return self.get_parameters(config={}), len(self.trainloader.dataset), {}
 
   def evaluate(self, parameters, config):
+
     self.set_parameters(parameters)
     if 'model_update' in config:
       self.save_local_model(config)
