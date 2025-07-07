@@ -83,5 +83,5 @@ def fedAvgSat(sat_df,
                "idle_time_avg": idle_time_avg})
 
     x = [client for client in clients if int(client.partition_id) in client_twice]
-
+    print(client_twice)
     return x, counter

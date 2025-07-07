@@ -64,12 +64,13 @@ class FedSatGen(fl.server.strategy.FedAvg):
         og_c = int(self.satellite_access_csv_name.split("/")[-1].split("_")[1][:-1])
 
 
-        gs = config["gs_locations"][1:-1].split(",")
+        gs = config["gs_locations"] #[1:-1].split(",")
+        
         self.factor_s = og_s / int(config["n_sat_in_cluster"])
         self.factor_c = og_c / int(config["n_cluster"])
         # choose only satellites that we want
         if config['alg'].startswith("AutoFLSat"):
-            self.satellite_access_csv = choose_sat_csv_auto(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
+            self.satellite_access_csv = choose_sat_csv_auto(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]))
         else:
             self.satellite_access_csv = choose_sat_csv(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]),gs)
         self.satellite_client_list = []
@@ -92,8 +93,11 @@ class FedSatGen(fl.server.strategy.FedAvg):
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
-        fit_ins = FitIns(parameters, config)
+            if "gs_locations" in config:
+                config.pop("gs_locations")
+            
 
+        fit_ins = FitIns(parameters, config)
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()
@@ -102,7 +106,6 @@ class FedSatGen(fl.server.strategy.FedAvg):
         clients = client_manager.sample(
             num_clients=sample_size, min_num_clients=min_num_clients
         )
-        
         if config["alg"] == "fedAvgSat":
             chosen_clients, self.counter = fedAvgSat(self.satellite_access_csv, 
                                        self.counter,
@@ -365,6 +368,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
                     fit_ins.config["agg_cluster"] = str(agg_cluster)
                     self.satellite_client_list.append(int(client.cid))
                     return_clients.append((client, deepcopy(fit_ins)))
+                
                 return return_clients
             elif self.model_type == "global_cluster":
                 for client,cluster,agg_cluster in chosen_clients:
@@ -378,7 +382,7 @@ class FedSatGen(fl.server.strategy.FedAvg):
                     fit_ins.config["duration"] = str(self.epochs_autoFLSat2)
                     return_clients.append((client, deepcopy(fit_ins)))
                 return return_clients
-                
+        
         return [(client, fit_ins) for client in chosen_clients]
 
 

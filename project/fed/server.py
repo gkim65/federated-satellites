@@ -15,6 +15,9 @@ from flwr.common import (
 import numpy as np
 import pandas as pd
 
+from omegaconf import DictConfig, OmegaConf
+import hydra
+
 from project.fed.strategies.fedsat_gen import FedSatGen
 
 from configparser import ConfigParser
@@ -27,70 +30,70 @@ from pathlib import Path
 # #############################################################################
 # Federating pipeline with Flower
 # #############################################################################
+@hydra.main(config_path="../config", config_name="config", version_base=None)
+def main(cfg: DictConfig):
 
+    print("\nConfig:")
+    print(OmegaConf.to_yaml(cfg))
 
-### Run all configuration files
-for file_name in os.listdir("config_files"):
+    #TODO: set up multirun
+    ### Run all configuration files
+    # for file_name in os.listdir("config_files"):
 
-    # Read config.ini file
-    config_object = ConfigParser()
-    config_object.read("config_files/"+file_name)
+    config_dict= {"name": cfg.name,
+                "round": cfg.fl.round,
+                "epochs": cfg.fl.epochs,
+                "client_cpu": cfg.fl.client_cpu,
+                "client_gpu": cfg.fl.client_gpu,
+                "trial": cfg.trial,
+                "dataset": cfg.dataset,
+                "alg": cfg.alg,
+                "clients": cfg.stk.n_sat_in_cluster*cfg.stk.n_cluster,
+                "client_limit": cfg.stk.client_limit,
+                "sim_fname" : cfg.stk.sim_fname,
+                "n_sat_in_cluster" : cfg.stk.n_sat_in_cluster,
+                "n_cluster" : cfg.stk.n_cluster,
+                "gs_locations" : cfg.stk.gs_locations,
+                "learning_rate": cfg.ml.learning_rate,
+                "momentum": cfg.ml.momentum,
+                "wait_time" : cfg.ml.wait_time,
+                "slrum" : cfg.slrum,
+                "prox_term": cfg.prox_term,
+                "data_rate": cfg.data_rate,
+                "power_consumption_per_epoch": cfg.power_consumption_per_epoch
+            }
+    
 
-
-    # TODO: Bring back in the future but for now accessing from the datasets
-    # if not os.path.exists(config_object["TEST_CONFIG"]["sim_fname"]):
-    #     # url = "https://drive.google.com/file/d/1zEiHCmMmx_qz17nSmrDzgqHlheYTbsvF/view?usp=sharing"
-    #     url = "https://drive.google.com/file/d/1ab37NCbS1EUx5cqDaMv2V7Fk_g5chhlv/view?usp=sharing"
-    #     gdown.download(url, config_object["TEST_CONFIG"]["sim_fname"], fuzzy=True)
-    # TODO: FIX Ways i send files in for testing for sim so i don't need to send full file
-    t_name = "AUTOFLEUR_5_29"#"testing"
-    for keys in config_object["TEST_CONFIG"].keys():
+    t_name = cfg.wandb.proj_name
+    for keys in config_dict.keys():
         print(keys)
         if keys != "sim_fname" and keys != "gs_locations" and keys != "slrum"  and keys != "client_cpu"  and keys != "client_gpu":
-            t_name = t_name + "_"+keys[:1]+str(config_object["TEST_CONFIG"][keys])
+            t_name = t_name + "_"+keys[:1]+str(config_dict[keys])
         
     # making sure to run multiple trials for each run
-    for i in range(int(config_object["TEST_CONFIG"]["trial"])):
-
+    for i in range(int(config_dict["trial"])):
         
-        ### Saving to Weights and Biases
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project=t_name,
-            # track hyperparameters and run metadata
-            config= {"name": config_object["TEST_CONFIG"]["name"],
-                "round": config_object["TEST_CONFIG"]["round"],
-                "epochs": config_object["TEST_CONFIG"]["epochs"],
-                "trial": config_object["TEST_CONFIG"]["trial"],
-                "clients": config_object["TEST_CONFIG"]["clients"],
-                "client_limit": config_object["TEST_CONFIG"]["client_limit"],
-                "dataset": config_object["TEST_CONFIG"]["dataset"],
-                "alg": config_object["TEST_CONFIG"]["alg"],
-                "learning_rate": config_object["TEST_CONFIG"]["learning_rate"],
-                "momentum": config_object["TEST_CONFIG"]["momentum"],
-                "wait_time" : config_object["TEST_CONFIG"]["wait_time"],
-                "sim_fname" : config_object["TEST_CONFIG"]["sim_fname"],
-                "n_sat_in_cluster" : config_object["TEST_CONFIG"]["n_sat_in_cluster"],
-                "n_cluster" : config_object["TEST_CONFIG"]["n_cluster"],
-                "slrum" : config_object["TEST_CONFIG"]["slrum"],
-                "client_cpu": config_object["TEST_CONFIG"]["client_cpu"],
-                "client_gpu": config_object["TEST_CONFIG"]["client_gpu"],
-                "prox_term": config_object["TEST_CONFIG"]["prox_term"],
-                "gs_locations" : config_object["TEST_CONFIG"]["gs_locations"][1:-1].split(",")
-            }
-        )
-        results = {}
+        if cfg.wandb.use:
+            ### Saving to Weights and Biases
+            wandb.init(
+                entity=cfg.wandb.entity,
+                # set the wandb project where this run will be logged
+                project=t_name,
+                # track hyperparameters and run metadata
+                config=config_dict
+            )
+            results = {}
 
         def fit_config(server_round: int):  
-            config = config_object["TEST_CONFIG"]
+            config = config_dict
             return config
     
         try:
             
             try:
                 
-                alg = config_object["TEST_CONFIG"]["alg"]
-                name = config_object["TEST_CONFIG"]["name"]
+                alg = config_dict["alg"]
+                name = config_dict["name"]
                 if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
                     os.remove(f'/datasets/{alg}/times_{name}.csv')
                     print(f'/datasets/{alg}/times_{name}.csv')
@@ -107,23 +110,24 @@ for file_name in os.listdir("config_files"):
             except:
                 print("no files to delete")
             
-            if config_object["TEST_CONFIG"]["dataset"] == "FEMNIST":
+            if config_dict["dataset"] == "FEMNIST":
                 client_fn = client_fn_femnist
-            if config_object["TEST_CONFIG"]["dataset"] == "EUROSAT":
+            if config_dict["dataset"] == "EUROSAT":
                 client_fn = client_fn_EuroSAT
-            if config_object["TEST_CONFIG"]["dataset"] == "CIFAR10":
+            if config_dict["dataset"] == "CIFAR10":
                 client_fn = client_fn_CIFAR10
-            my_client_resources = {'num_cpus': float(config_object["TEST_CONFIG"]["client_cpu"]), 'num_gpus': float(config_object["TEST_CONFIG"]["client_gpu"])}
+            print(config_dict["clients"])
+            my_client_resources = {'num_cpus': float(config_dict["client_cpu"]), 'num_gpus': float(config_dict["client_gpu"])}
             results = fl.simulation.start_simulation(
-                num_clients= int(config_object["TEST_CONFIG"]["clients"]),
-                # clients_ids =[str(c_id) for c_id in range(int(config_object["TEST_CONFIG"]["clients"]))],
+                num_clients= int(config_dict["clients"]),
+                # clients_ids =[str(c_id) for c_id in range(int(config_dict["clients"]))],
                 client_fn=client_fn,
-                config=fl.server.ServerConfig(num_rounds=int(config_object["TEST_CONFIG"]["round"])),
+                config=fl.server.ServerConfig(num_rounds=int(config_dict["round"])),
                 
                 strategy=FedSatGen(
                     on_fit_config_fn=fit_config, 
-                    satellite_access_csv = config_object["TEST_CONFIG"]["sim_fname"],
-                    time_wait = int(config_object["TEST_CONFIG"]["wait_time"])
+                    satellite_access_csv = config_dict["sim_fname"],
+                    time_wait = int(config_dict["wait_time"])
                     ),
                 client_resources = my_client_resources 
                     
@@ -131,10 +135,12 @@ for file_name in os.listdir("config_files"):
         except:
             ray.shutdown()
             gc.collect()
-            wandb.finish()
+
+            if cfg.wandb.use:
+                wandb.finish()
             try:
-                name = config_object["TEST_CONFIG"]["name"]
-                alg = config_object["TEST_CONFIG"]["alg"]
+                name = config_dict["name"]
+                alg = config_dict["alg"]
                 if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
                     os.remove(f'/datasets/{alg}/times_{name}.csv')
                     print(f'/datasets/{alg}/times_{name}.csv')
@@ -146,10 +152,12 @@ for file_name in os.listdir("config_files"):
                 print("no model files to delete")
         ray.shutdown()
         gc.collect()
-        wandb.finish()
+
+        if cfg.wandb.use:
+            wandb.finish()
         try:
-            name = config_object["TEST_CONFIG"]["name"]
-            alg = config_object["TEST_CONFIG"]["alg"]
+            name = config_dict["name"]
+            alg = config_dict["alg"]
             if os.path.exists(f'/datasets/{alg}/times_{name}.csv'):
                 os.remove(f'/datasets/{alg}/times_{name}.csv')
                 print(f'/datasets/{alg}/times_{name}.csv')
@@ -160,3 +168,5 @@ for file_name in os.listdir("config_files"):
         except:
             print("no model files to delete")
 
+if __name__ == "__main__":
+    main()

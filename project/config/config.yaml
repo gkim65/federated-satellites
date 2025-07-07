@@ -1,0 +1,65 @@
+
+wandb:
+  use: True
+  entity: "fed_sats" # insert your wandb entity here
+  proj_name: ""
+# FL Specific Parameters:
+fl:
+  round: 5 #1500
+  epochs: 10
+  client_cpu: 1
+  client_gpu: 0
+
+# For posterity since no seed is set, run multiple trials (typically 5) of same run
+trial: 1
+
+# Dataset, can use FEMNIST, EUROSAT, CIFAR10 
+dataset: "FEMNIST"
+
+# Algorithm (Currently list from:)
+# - "fedAvgSat"
+# - "fedAvg2Sat" (with scheduling)
+# - "fedAvg3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
+# - "fedProxSat"
+# - "fedProx2Sat" (with scheduling)
+# - "fedProx3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
+# - "fedBuffSat"
+# - "fedBuff2Sat" (with scheduling)
+# - "fedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
+# - "AutoFLSat" (still has bugs)
+# - "AutoFLSat2" (Proper hierarchical framework)
+alg: "fedAvg2Sat"
+
+
+# used for specific algorithms for folder saving
+name: all_gs4
+
+# STK specific parmeters 
+# after downloading datasets using the download_datasets.sh file, find these csvs in datasets/landsat folder
+# files with _inter is for AutoFLSat, files without are for all other spacified algorithms 
+stk:
+  sim_fname: datasets/landsat/10s_10c_s_landsat_star.csv  #datasets/landsat/10s_3c_s_landsat_star_inter.csv 
+  # make sure to set # of sat in cluster and # of cluster same os your csv file name, or a multiple of the number itself
+  n_sat_in_cluster: 10
+  n_cluster: 10
+  # Just typically keep to 10
+  client_limit: 10
+  # take out names of ground stations we don't want
+  gs_locations: ["Sioux_Falls","Sanya","Johannesburg","Cordoba","Tromso","Kashi","Beijing","Neustrelitz","Parepare","Alice_Springs","Fairbanks","Prince_Albert","Shadnagar"]
+
+# ML things
+ml:
+  learning_rate: 0.001
+  momentum: 0.9
+  # may be able to delete
+  wait_time: 7
+
+# TODO: Check if i still need this
+slrum: y
+
+# TODO: Specific to Proximal Term (I need to check if we need this)
+prox_term: 2
+
+# Hardware specific parameters
+data_rate: 10
+power_consumption_per_epoch: 10

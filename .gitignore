@@ -17,5 +17,6 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 /datasets
 *.pkl
 *model_files_*
-
+/outputs
+.venv
 
