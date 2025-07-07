@@ -1,6 +1,55 @@
 # federated-satellites
 
 
+## Instructions for installing dependencies and cloning this repository
+
+First, clone the repository on the folder you'd like to run this in.
+
+```
+git clone https://github.com/gkim65/federated-satellites.git
+```
+
+You can then `cd` into the folder created from this command, `federated-satellites`
+
+```
+cd loc-gsopt
+```
+
+And create a virtual environment to download all of your dependencies. I recommend using `uv` which can be installed using the documentation linked [here](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2). 
+
+### Dependency management using `uv`:
+
+Create a new virtual environment with `uv` on a Mac inside the git folder, and install dependencies existing in the `pyproject.toml` file.
+
+```
+uv venv
+source .venv/bin/activate 
+uv sync
+```
+
+
+
+
+## Using this Repository
+
+Using the `hydra` config file manager, you can run files by running:
+
+```
+python src/main.py
+```
+
+You can run sweeps/perform parameter runs
+
+```
+python src/main.py --multirun problem.sat_num=1,5,10
+```
+
+or just change the parameters directly in `config\config.yaml`. 
+
+*NOTE: Example folder `ipynb` files, still in development* (They are runnable, but not fully cleaned up)
+
+
+
 The code within this repository is arranged in the following format:
 
 At the base of the folder, you'll find 3 main files that one would interact with:

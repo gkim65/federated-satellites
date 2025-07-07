@@ -4,8 +4,8 @@ name: all_gs4
 
 # FL Specific Parameters:
 fl:
-  round: 1500
-  epochs: 10
+  round: 5 #1500
+  epochs: 3
   client_cpu: 1
   client_gpu: 0
 
