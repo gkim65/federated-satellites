@@ -1,11 +1,12 @@
 
-# Name of run for easier processing later
-name: all_gs4
-
+wandb:
+  use: True
+  entity: "fed_sats" # insert your wandb entity here
+  proj_name: ""
 # FL Specific Parameters:
 fl:
   round: 5 #1500
-  epochs: 3
+  epochs: 10
   client_cpu: 1
   client_gpu: 0
 
@@ -27,7 +28,11 @@ dataset: "FEMNIST"
 # - "fedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
 # - "AutoFLSat" (still has bugs)
 # - "AutoFLSat2" (Proper hierarchical framework)
-alg: "fedAvgSat"
+alg: "fedAvg2Sat"
+
+
+# used for specific algorithms for folder saving
+name: all_gs4
 
 # STK specific parmeters 
 # after downloading datasets using the download_datasets.sh file, find these csvs in datasets/landsat folder

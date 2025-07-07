@@ -242,7 +242,7 @@ def client_fn_femnist(context: Context) -> FlowerClient:
     
     return FlowerClient(partition_id, net, trainloader, testloader).to_client()
 
-def client_fn_EuroSAT(partition_id: int) -> FlowerClient:
+def client_fn_EuroSAT(context: Context) -> FlowerClient:
 
     # Load model and data
     print("MADE CLIENT")
@@ -260,11 +260,13 @@ def client_fn_EuroSAT(partition_id: int) -> FlowerClient:
 
 
     net = EuroSATNet().to(DEVICE)
+    partition_id = context.node_config["partition-id"]
+
     trainloader, testloader = load_EUROSAT(partition_id)
     
     return FlowerClient(partition_id, net, trainloader, testloader).to_client()
 
-def client_fn_CIFAR10(partition_id: int) -> FlowerClient:
+def client_fn_CIFAR10(context: Context) -> FlowerClient:
   # Load model and data (simple CNN, CIFAR-10)
 
   print("MADE CLIENT")
@@ -280,6 +282,7 @@ def client_fn_CIFAR10(partition_id: int) -> FlowerClient:
 
 
   # net = CIFAR10_Net().to(DEVICE)
+  partition_id = context.node_config["partition-id"]
   net = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=False).to(DEVICE)
   trainloader, testloader = load_data_CIFAR10(partition_id)
   return FlowerClient(partition_id, net, trainloader, testloader).to_client()

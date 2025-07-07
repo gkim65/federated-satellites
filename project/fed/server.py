@@ -64,8 +64,7 @@ def main(cfg: DictConfig):
             }
     
 
-    # TODO: fix t_name
-    t_name = "AUTOFLEUR_5_29"#"testing"
+    t_name = cfg.wandb.proj_name
     for keys in config_dict.keys():
         print(keys)
         if keys != "sim_fname" and keys != "gs_locations" and keys != "slrum"  and keys != "client_cpu"  and keys != "client_gpu":
@@ -74,14 +73,16 @@ def main(cfg: DictConfig):
     # making sure to run multiple trials for each run
     for i in range(int(config_dict["trial"])):
         
-        ### Saving to Weights and Biases
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project=t_name,
-            # track hyperparameters and run metadata
-            config=config_dict
-        )
-        results = {}
+        if cfg.wandb.use:
+            ### Saving to Weights and Biases
+            wandb.init(
+                entity=cfg.wandb.entity,
+                # set the wandb project where this run will be logged
+                project=t_name,
+                # track hyperparameters and run metadata
+                config=config_dict
+            )
+            results = {}
 
         def fit_config(server_round: int):  
             config = config_dict
@@ -134,7 +135,9 @@ def main(cfg: DictConfig):
         except:
             ray.shutdown()
             gc.collect()
-            wandb.finish()
+
+            if cfg.wandb.use:
+                wandb.finish()
             try:
                 name = config_dict["name"]
                 alg = config_dict["alg"]
@@ -149,7 +152,9 @@ def main(cfg: DictConfig):
                 print("no model files to delete")
         ray.shutdown()
         gc.collect()
-        wandb.finish()
+
+        if cfg.wandb.use:
+            wandb.finish()
         try:
             name = config_dict["name"]
             alg = config_dict["alg"]

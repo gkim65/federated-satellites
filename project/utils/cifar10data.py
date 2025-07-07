@@ -15,7 +15,7 @@ from torchvision import datasets, models, transforms
 def load_data_CIFAR10(cid):
     """Load CIFAR-10 (training and test set)."""
     try:
-        data_dir = '/datasets/'
+        data_dir = 'datasets/'
         if not os.path.exists(data_dir):
             raise ValueError(f"Required files do not exist, path: {data_dir}")
     except:
@@ -32,7 +32,7 @@ def load_data_CIFAR10(cid):
     
     datasets_noniid: List[Subset] = []
     
-    distribute_noniid(40, 0.5, 41, dataset, datasets_noniid)
+    distribute_noniid(100, 0.5, 41, dataset, datasets_noniid)
 
     # Randomly split the dataset into 80% train / 20% test 
     # by subsetting the transformed train and test datasets
