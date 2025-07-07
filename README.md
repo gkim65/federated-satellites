@@ -1,6 +1,8 @@
 # federated-satellites
 
 
+This repository provides example frameworks for pre-computed satellite constellation access windows to inform when and how satellites (clients) can communicate with ground stations (servers), enabling realistic simulation and analysis of communication-constrained federated learning workflows in space. This repo contians the code and examples supporting our work FLySTacK—our novel platform for satellite constellation design and hardware-aware federated learning evaluation. The full paper can be found at: https://arxiv.org/abs/2411.00263
+
 ## Instructions for installing dependencies and cloning this repository
 
 First, clone the repository on the folder you'd like to run this in.
