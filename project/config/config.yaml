@@ -61,5 +61,5 @@ slrum: y
 prox_term: 2
 
 # Hardware specific parameters
-data_rate: 10
-power_consumption_per_epoch: 10
+data_rate: 120 # How many seconds it takes to send model parameters in one pass
+power_consumption_per_epoch: 1 # how many seconds each epoch takes

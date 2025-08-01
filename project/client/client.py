@@ -56,7 +56,7 @@ def train(net, trainloader, config, partition_id):
     print(config["data_rate"])
     print(config["power_consumption_per_epoch"])
     if 'duration' in config:
-      total_epochs = int (float(config['duration'])-120) # / 60 / 5)
+      total_epochs = int ((float(config['duration'])-config["data_rate"])/config["power_consumption_per_epoch"]) # / 60 / 5)
       if total_epochs > int(config['epochs']):
         total_epochs = int(config['epochs'])
       elif total_epochs < 0:
