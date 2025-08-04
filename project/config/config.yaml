@@ -28,7 +28,7 @@ dataset: "FEMNIST"
 # - "fedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
 # - "AutoFLSat" (still has bugs)
 # - "AutoFLSat2" (Proper hierarchical framework)
-alg: "fedAvg2Sat"
+alg: "fedAvg3Sat"
 
 
 # used for specific algorithms for folder saving

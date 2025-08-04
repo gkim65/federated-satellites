@@ -52,9 +52,9 @@ def fedAvg3Sat(sat_df,
             cluster_list[cluster_id,satellite_id] += 1
 
 
-        # Track every single pass of every client satellite
-        if client_list[client_id] != -1:
-            client_list[client_id] += 1
+        # # Track every single pass of every client satellite
+        # if client_list[client_id] != -1:
+        #     client_list[client_id] += 1
 
         # If first time joining training line, track when they start
         if client_time_list[client_id] == 0:
