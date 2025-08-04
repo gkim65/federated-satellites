@@ -1,6 +1,8 @@
 # federated-satellites
 
 
+This repository provides example frameworks for pre-computed satellite constellation access windows to inform when and how satellites (clients) can communicate with ground stations (servers), enabling realistic simulation and analysis of communication-constrained federated learning workflows in space. This repo contians the code and examples supporting our work FLySTacK—our novel platform for satellite constellation design and hardware-aware federated learning evaluation. The full paper can be found at: https://arxiv.org/abs/2411.00263
+
 ## Instructions for installing dependencies and cloning this repository
 
 First, clone the repository on the folder you'd like to run this in.
@@ -102,3 +104,15 @@ At the base of the folder, you'll find 3 main files that one would interact with
 - `project/fed/server.py`: Template file, copies are made with config_maker for various parameter sweeps, as each server.py file looks at all of the config files in the config folder made by config_maker
 - `project/client/client.py`: A generalized client that can accomodate datasets of "EUROSAT", "FEMNIST", and "CIFAR10" just need to toggle between the options inside `config.yaml`, additional clients can be made by adding in clients here
 - `project/strategies`: a list of strategies already implemented using the csv times listed inside STK
+
+
+If you would like to use this repo, or this work in any way, please cite the following paper in your research!
+
+```
+@article{kim2024space,
+  title={Space for Improvement: Navigating the Design Space for Federated Learning in Satellite Constellations},
+  author={Kim, Grace and Powell, Luca and Svoboda, Filip and Lane, Nicholas},
+  journal={arXiv preprint arXiv:2411.00263},
+  year={2024}
+}
+```
