@@ -4,7 +4,7 @@ import os
 import ray
 
 import gc
-from project.client.client import client_fn_femnist, client_fn_EuroSAT,client_fn_CIFAR10
+from project.client.client import client_fn_femnist, client_fn_EuroSAT,client_fn_CIFAR10,client_fn_mnist
 from typing import Dict, List, Optional, Tuple, Union
 from flwr.server.client_proxy import ClientProxy
 from flwr.common import (
@@ -116,6 +116,8 @@ def main(cfg: DictConfig):
                 client_fn = client_fn_EuroSAT
             if config_dict["dataset"] == "CIFAR10":
                 client_fn = client_fn_CIFAR10
+            if config_dict["dataset"] == "MNIST":
+                client_fn = client_fn_mnist
             print(config_dict["clients"])
             my_client_resources = {'num_cpus': float(config_dict["client_cpu"]), 'num_gpus': float(config_dict["client_gpu"])}
             results = fl.simulation.start_simulation(

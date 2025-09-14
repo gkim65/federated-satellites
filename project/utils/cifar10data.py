@@ -6,7 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Compose, ToTensor, Normalize
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, MNIST
+from torchvision import datasets, transforms
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, models, transforms
@@ -27,6 +28,55 @@ def load_data_CIFAR10(cid):
     trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     dataset = CIFAR10(data_dir, download=True, transform=trf)
+
+    cid = int(cid)
+    
+    datasets_noniid: List[Subset] = []
+    
+    distribute_noniid(100, 0.5, 41, dataset, datasets_noniid)
+
+    # Randomly split the dataset into 80% train / 20% test 
+    # by subsetting the transformed train and test datasets
+    train_size = 0.8
+    indices = list(range(int(len(datasets_noniid[cid]))))
+    split = int(train_size * len(datasets_noniid[cid]))
+    np.random.shuffle(indices)
+
+    train_data_cid = Subset(datasets_noniid[cid], indices=indices[:split])
+    test_data_cid = Subset(datasets_noniid[cid], indices=indices[split:])
+
+    print("Train/test sizes: {}/{}".format(len(train_data_cid), len(test_data_cid)))
+
+    batch_size = 32
+    num_workers = 2
+    train_loader = DataLoader(
+        train_data_cid, batch_size=batch_size, num_workers=num_workers, shuffle=True
+    )
+    test_loader = DataLoader(
+        test_data_cid, batch_size=batch_size, num_workers=num_workers, shuffle=False
+    )
+    # print("# OF SAMPLES")
+    # print(len(train_loader))
+    # print(len(test_loader))
+    
+    return train_loader, test_loader
+
+
+def load_data_mnist(cid):
+    """Load Mnist (training and test set)."""
+    try:
+        data_dir = 'datasets/'
+        if not os.path.exists(data_dir):
+            raise ValueError(f"Required files do not exist, path: {data_dir}")
+    except:
+        data_dir = '../datasets/'
+        print("found data", data_dir)
+        if not os.path.exists(data_dir):
+            raise ValueError(f"Required files do not exist, path: {data_dir}")
+    
+    trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+    dataset = MNIST(data_dir, download=True, transform=trf)
 
     cid = int(cid)
     

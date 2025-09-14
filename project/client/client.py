@@ -24,7 +24,7 @@ from project.utils.femnist import FemnistDataset, FemnistNet, load_FEMNIST
 from project.utils.eurosat import EuroSATNet, load_EUROSAT
 
 # CIFAR10 specific
-from project.utils.cifar10data import CIFAR10_Net, load_data_CIFAR10
+from project.utils.cifar10data import CIFAR10_Net, load_data_CIFAR10, load_data_mnist
 
 # #############################################################################
 # Checking for Client Resources
@@ -285,4 +285,26 @@ def client_fn_CIFAR10(context: Context) -> FlowerClient:
   partition_id = context.node_config["partition-id"]
   net = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=False).to(DEVICE)
   trainloader, testloader = load_data_CIFAR10(partition_id)
+  return FlowerClient(partition_id, net, trainloader, testloader).to_client()
+
+
+def client_fn_mnist(context: Context) -> FlowerClient:
+  # Load model and data (simple CNN, CIFAR-10)
+
+  print("MADE CLIENT")
+  if torch.cuda.is_available():
+      print ("GPU CUDA")
+      DEVICE = torch.device("cuda")
+  elif torch.backends.mps.is_available():
+      print ("MPS device")
+      DEVICE = torch.device("mps")
+  else:
+      print ("MPS device not found, using CPU")
+      DEVICE = torch.device("cpu")
+
+
+  # net = CIFAR10_Net().to(DEVICE)
+  partition_id = context.node_config["partition-id"]
+  net = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=False).to(DEVICE)
+  trainloader, testloader = load_data_mnist(partition_id)
   return FlowerClient(partition_id, net, trainloader, testloader).to_client()
