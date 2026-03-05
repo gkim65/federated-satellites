@@ -19,4 +19,4 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 *model_files_*
 /outputs
 .venv
-
+multirun/*

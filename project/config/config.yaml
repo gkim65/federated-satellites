@@ -2,16 +2,16 @@
 wandb:
   use: True
   entity: "fed_sats" # insert your wandb entity here
-  proj_name: "AutoFLSatFEM_ACM"
+  proj_name: "NoAutoFLSatFEM_ACM"
 # FL Specific Parameters:
 fl:
-  round: 2500 #1500
+  round: 500 #1500
   epochs: 10
   client_cpu: 1
   client_gpu: 0
 
 # For posterity since no seed is set, run multiple trials (typically 5) of same run
-trial: 1
+trial: 5
 
 # Dataset, can use FEMNIST, EUROSAT, CIFAR10, MNIST
 dataset: "MNIST"
@@ -28,7 +28,7 @@ dataset: "MNIST"
 # - "fedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
 # - "AutoFLSat" (still has bugs)
 # - "AutoFLSat2" (Proper hierarchical framework)
-alg: "AutoFLSat2"
+alg: "fedAvg3Sat"
 
 
 # used for specific algorithms for folder saving
@@ -38,12 +38,12 @@ name: allgs4
 # after downloading datasets using the download_datasets.sh file, find these csvs in datasets/landsat folder
 # files with _inter is for AutoFLSat, files without are for all other spacified algorithms 
 stk:
-  sim_fname: datasets/landsat/10s_4c_s_landsat_star_inter.csv  #datasets/landsat/10s_3c_s_landsat_star_inter.csv 
+  sim_fname: "datasets/landsat/12s_12c_s_landsat_star.csv"  #datasets/landsat/10s_3c_s_landsat_star_inter.csv 
   # make sure to set # of sat in cluster and # of cluster same os your csv file name, or a multiple of the number itself
-  n_sat_in_cluster: 10
+  n_sat_in_cluster: 12
   n_cluster: 4
   # Just typically keep to 10
-  client_limit: 40
+  client_limit: 10
   # take out names of ground stations we don't want
   gs_locations: ["Sioux_Falls","Sanya","Johannesburg","Cordoba","Tromso","Kashi","Beijing","Neustrelitz","Parepare","Alice_Springs","Fairbanks","Prince_Albert","Shadnagar"]
 
@@ -55,7 +55,7 @@ ml:
   wait_time: 7
 
 # TODO: Check if i still need this
-slrum: n
+slrum: y
 
 # TODO: Specific to Proximal Term (I need to check if we need this)
 prox_term: 2

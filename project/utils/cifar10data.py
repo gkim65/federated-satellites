@@ -4,7 +4,7 @@ import flwr as fl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.transforms import Compose, ToTensor, Normalize
+from torchvision.transforms import Compose, ToTensor, Normalize, Lambda
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10, MNIST
 from torchvision import datasets, transforms
@@ -74,7 +74,15 @@ def load_data_mnist(cid):
         if not os.path.exists(data_dir):
             raise ValueError(f"Required files do not exist, path: {data_dir}")
     
-    trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    # trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    trf = Compose([
+    ToTensor(),
+    Lambda(lambda x: x.repeat(3, 1, 1)),  # replicate channel to make 3 channels
+    Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+
+
 
     dataset = MNIST(data_dir, download=True, transform=trf)
 
