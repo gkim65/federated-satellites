@@ -68,7 +68,10 @@ class FedSatGen(fl.server.strategy.FedAvg):
         gs = config["gs_locations"] #[1:-1].split(",")
         
         self.factor_s = og_s / int(config["n_sat_in_cluster"])
-        self.factor_c = og_c / int(config["n_cluster"])
+        if config['alg'] == 'AutoFLSatWaterfall':
+            self.factor_c = 1  # cluster IDs are already 1-indexed consecutive
+        else:
+            self.factor_c = og_c / int(config["n_cluster"])
         # choose only satellites that we want
         if config['alg'].startswith("AutoFLSat"):
             self.satellite_access_csv = choose_sat_csv_auto(self.satellite_access_csv, og_s, og_c, int(config["n_sat_in_cluster"]), int(config["n_cluster"]))
@@ -418,7 +421,9 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                         self.start_time_og,
                                         self.agg_true,
                                         self.waterfall_step,
-                                        self.waterfall_phase)
+                                        self.waterfall_phase,                            
+                                        float(config.get("dropout_rate", 0.0)))  # add this
+            
             
             return_clients = []
             self.satellite_client_list = []

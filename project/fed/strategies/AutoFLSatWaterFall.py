@@ -24,7 +24,8 @@ def AutoFLSat_Waterfall(sat_df,
                        start_time_og,
                        agg_true,
                        waterfall_step,
-                       waterfall_phase):
+                       waterfall_phase,
+                       dropout_rate):
 
     start_time_sec = sat_df['Start Time Seconds Cumulative'].iloc[counter]
     if start_time_og == 0:
@@ -56,10 +57,17 @@ def AutoFLSat_Waterfall(sat_df,
                     left_pair  = (waterfall_step + 1, waterfall_step + 2)
                     right_pair = (cluster_n - waterfall_step, cluster_n - waterfall_step - 1)
 
+                    # Add temporarily in AutoFLSatWaterfall before calling scheduleAdjacentISL
+                    unique_pairs = sat_df[['cluster_num_1', 'cluster_num_2']].drop_duplicates()
+                    print("Unique cluster pairs in CSV:")
+                    print(unique_pairs.to_string())
+                    print(f"Total rows: {len(sat_df)}")
+                    print(f"First few start times: {sat_df['Start Time Seconds Cumulative'].head(10).tolist()}")
+
                     start_time, end_time, counter, epoch_train, idle_time, duration_round = \
                         scheduleAdjacentISL(sat_df, counter, factor_c,
                                             start_time_og, int(config_epochs) + 120,
-                                            left_pair, right_pair)
+                                            left_pair, right_pair,dropout_rate)
 
                     wandb.log({"waterfall_step": waterfall_step,
                                "waterfall_phase": "scatter",
@@ -116,7 +124,7 @@ def AutoFLSat_Waterfall(sat_df,
                 start_time, end_time, counter, epoch_train, idle_time, duration_round = \
                     scheduleAdjacentISL(sat_df, counter, factor_c,
                                         start_time_og, int(config_epochs) + 120,
-                                        mid_pair, None)
+                                        mid_pair, None,dropout_rate)
 
                 wandb.log({"waterfall_phase": "middle_exchange",
                            "mid_left": mid_left,
@@ -159,7 +167,7 @@ def AutoFLSat_Waterfall(sat_df,
                     start_time, end_time, counter, epoch_train, idle_time, duration_round = \
                         scheduleAdjacentISL(sat_df, counter, factor_c,
                                             start_time_og, int(config_epochs) + 120,
-                                            left_pair, right_pair)
+                                            left_pair, right_pair,dropout_rate)
 
                     wandb.log({"waterfall_step": waterfall_step,
                                "waterfall_phase": "allgather",
@@ -249,43 +257,32 @@ def AutoFLSat_Waterfall(sat_df,
 # at each waterfall step — never selects non-adjacent pairs
 # -------------------------------------------------------
 def scheduleAdjacentISL(sat_df, counter, factor_c, start_time_og,
-                        epochs, pair_left, pair_right):
-    """
-    Find the next available inter-SL window for adjacent plane pairs only.
-
-    Args:
-        pair_left:  (plane_a, plane_b) for left side of waterfall
-        pair_right: (plane_a, plane_b) for right side, or None for single pair
-
-    Raises:
-        ValueError if no valid window found before end of sat_df
-    """
+                        epochs, pair_left, pair_right, dropout_rate=0.0):
+    
     count_temp   = counter
     found_left   = False
-    found_right  = pair_right is None  # if no right pair needed mark as done
+    found_right  = pair_right is None
 
     left_start,  left_end  = 0, 0
     right_start, right_end = 0, 0
+    
+    dropped_left  = 0
+    dropped_right = 0
 
     training_complete_time = start_time_og + epochs
 
     while not (found_left and found_right):
 
-        # Safety: stop if we run off end of dataframe
         if count_temp >= len(sat_df):
             raise ValueError(
                 f"No valid inter-SL window found for pairs "
                 f"left={pair_left}, right={pair_right}. "
-                f"Searched {count_temp - counter} rows from counter={counter}. "
-                f"Training completes at t={training_complete_time:.0f}. "
-                f"Last row time="
-                f"{sat_df['Start Time Seconds Cumulative'].iloc[-1]:.0f}."
+                f"Dropped {dropped_left} left windows, {dropped_right} right windows."
             )
 
         cluster_id_1 = int(sat_df['cluster_num_1'].iloc[count_temp] / factor_c)
         cluster_id_2 = int(sat_df['cluster_num_2'].iloc[count_temp] / factor_c)
 
-        # Normalize order for lookup
         if cluster_id_1 > cluster_id_2:
             cluster_id_1, cluster_id_2 = cluster_id_2, cluster_id_1
 
@@ -301,39 +298,133 @@ def scheduleAdjacentISL(sat_df, counter, factor_c, start_time_og,
             if not found_left and pair_left is not None:
                 l1, l2 = min(pair_left), max(pair_left)
                 if cluster_id_1 == l1 and cluster_id_2 == l2:
-                    left_start, left_end = temp_start, temp_end
-                    found_left = True
-                    print(f"  ✓ Left pair {pair_left} @ t={temp_start:.0f} "
-                          f"(dur={duration:.0f}s)")
+                    # Simulate dropout
+                    if np.random.random() < dropout_rate:
+                        dropped_left += 1
+                        print(f"  ✗ Dropped left pair {pair_left} @ t={temp_start:.0f} "
+                              f"(dropout_rate={dropout_rate})")
+                    else:
+                        left_start, left_end = temp_start, temp_end
+                        found_left = True
+                        print(f"  ✓ Left pair {pair_left} @ t={temp_start:.0f} "
+                              f"(dur={duration:.0f}s)")
 
             if not found_right and pair_right is not None:
                 r1, r2 = min(pair_right), max(pair_right)
                 if cluster_id_1 == r1 and cluster_id_2 == r2:
-                    right_start, right_end = temp_start, temp_end
-                    found_right = True
-                    print(f"  ✓ Right pair {pair_right} @ t={temp_start:.0f} "
-                          f"(dur={duration:.0f}s)")
+                    if np.random.random() < dropout_rate:
+                        dropped_right += 1
+                        print(f"  ✗ Dropped right pair {pair_right} @ t={temp_start:.0f} "
+                              f"(dropout_rate={dropout_rate})")
+                    else:
+                        right_start, right_end = temp_start, temp_end
+                        found_right = True
+                        print(f"  ✓ Right pair {pair_right} @ t={temp_start:.0f} "
+                              f"(dur={duration:.0f}s)")
 
         count_temp += 1
 
-    # Use the later start so both sides are ready simultaneously
     new_start_time = max(left_start, right_start) if pair_right else left_start
     new_end_time   = max(left_end,   right_end)   if pair_right else left_end
 
-    # Sanity checks
-    assert new_start_time > training_complete_time, (
-        f"Selected window t={new_start_time:.0f} is before "
-        f"training completes at t={training_complete_time:.0f}"
-    )
-    assert new_end_time > new_start_time, (
-        f"Invalid window: end={new_end_time:.0f} <= start={new_start_time:.0f}"
-    )
-
     idle_time      = abs(left_start - right_start) if pair_right else 0
     epoch_train    = new_start_time - start_time_og
-    duration_round = new_end_time - new_start_time
+    duration_round = new_end_time   - new_start_time
 
-    print(f"  Window: start={new_start_time:.0f}, end={new_end_time:.0f}, "
-          f"dur={duration_round:.0f}s, idle={idle_time:.0f}s")
+    wandb.log({"dropped_left_windows": dropped_left,
+               "dropped_right_windows": dropped_right,
+               "total_dropped_windows": dropped_left + dropped_right,
+               "dropout_rate": dropout_rate})
 
     return new_start_time, new_end_time, count_temp, epoch_train, idle_time, duration_round
+
+
+# def scheduleAdjacentISL(sat_df, counter, factor_c, start_time_og,
+#                         epochs, pair_left, pair_right):
+#     """
+#     Find the next available inter-SL window for adjacent plane pairs only.
+
+#     Args:
+#         pair_left:  (plane_a, plane_b) for left side of waterfall
+#         pair_right: (plane_a, plane_b) for right side, or None for single pair
+
+#     Raises:
+#         ValueError if no valid window found before end of sat_df
+#     """
+#     count_temp   = counter
+#     found_left   = False
+#     found_right  = pair_right is None  # if no right pair needed mark as done
+
+#     left_start,  left_end  = 0, 0
+#     right_start, right_end = 0, 0
+
+#     training_complete_time = start_time_og + epochs
+
+#     while not (found_left and found_right):
+
+#         # Safety: stop if we run off end of dataframe
+#         if count_temp >= len(sat_df):
+#             raise ValueError(
+#                 f"No valid inter-SL window found for pairs "
+#                 f"left={pair_left}, right={pair_right}. "
+#                 f"Searched {count_temp - counter} rows from counter={counter}. "
+#                 f"Training completes at t={training_complete_time:.0f}. "
+#                 f"Last row time="
+#                 f"{sat_df['Start Time Seconds Cumulative'].iloc[-1]:.0f}."
+#             )
+
+#         cluster_id_1 = int(sat_df['cluster_num_1'].iloc[count_temp] / factor_c)
+#         cluster_id_2 = int(sat_df['cluster_num_2'].iloc[count_temp] / factor_c)
+
+#         # Normalize order for lookup
+#         if cluster_id_1 > cluster_id_2:
+#             cluster_id_1, cluster_id_2 = cluster_id_2, cluster_id_1
+
+#         temp_start = sat_df['Start Time Seconds Cumulative'].iloc[count_temp]
+#         temp_end   = sat_df['End Time Seconds Cumulative'].iloc[count_temp]
+#         duration   = sat_df['Duration (sec)'].iloc[count_temp]
+
+#         training_done      = temp_start > training_complete_time
+#         window_long_enough = duration > 200
+
+#         if training_done and window_long_enough:
+
+#             if not found_left and pair_left is not None:
+#                 l1, l2 = min(pair_left), max(pair_left)
+#                 if cluster_id_1 == l1 and cluster_id_2 == l2:
+#                     left_start, left_end = temp_start, temp_end
+#                     found_left = True
+#                     print(f"  ✓ Left pair {pair_left} @ t={temp_start:.0f} "
+#                           f"(dur={duration:.0f}s)")
+
+#             if not found_right and pair_right is not None:
+#                 r1, r2 = min(pair_right), max(pair_right)
+#                 if cluster_id_1 == r1 and cluster_id_2 == r2:
+#                     right_start, right_end = temp_start, temp_end
+#                     found_right = True
+#                     print(f"  ✓ Right pair {pair_right} @ t={temp_start:.0f} "
+#                           f"(dur={duration:.0f}s)")
+
+#         count_temp += 1
+
+#     # Use the later start so both sides are ready simultaneously
+#     new_start_time = max(left_start, right_start) if pair_right else left_start
+#     new_end_time   = max(left_end,   right_end)   if pair_right else left_end
+
+#     # Sanity checks
+#     assert new_start_time > training_complete_time, (
+#         f"Selected window t={new_start_time:.0f} is before "
+#         f"training completes at t={training_complete_time:.0f}"
+#     )
+#     assert new_end_time > new_start_time, (
+#         f"Invalid window: end={new_end_time:.0f} <= start={new_start_time:.0f}"
+#     )
+
+#     idle_time      = abs(left_start - right_start) if pair_right else 0
+#     epoch_train    = new_start_time - start_time_og
+#     duration_round = new_end_time - new_start_time
+
+#     print(f"  Window: start={new_start_time:.0f}, end={new_end_time:.0f}, "
+#           f"dur={duration_round:.0f}s, idle={idle_time:.0f}s")
+
+#     return new_start_time, new_end_time, count_temp, epoch_train, idle_time, duration_round
