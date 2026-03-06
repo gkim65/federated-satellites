@@ -161,7 +161,11 @@ class FlowerClient(fl.client.NumPyClient):
         agg_cluster = config['agg_cluster']
         file_name = f'datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
         torch.save(self.net.state_dict(), file_name)
-
+    elif alg == "AutoFLSatWaterfall":
+      cluster = config['cluster_identifier']
+      agg_cluster = config['agg_cluster']
+      file_name = f'datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
+      torch.save(self.net.state_dict(), file_name)
     else:
       if alg == "AutoFLSat":
         cluster = config['cluster_identifier']
@@ -178,7 +182,7 @@ class FlowerClient(fl.client.NumPyClient):
     buff_name = ""
     auto_name = ""
 
-    if alg == "AutoFLSat":
+    if alg in ("AutoFLSat", "AutoFLSatWaterfall"):
       cluster = config['cluster_identifier']
       agg_cluster = config['agg_cluster']
       auto_name = f'datasets/{alg}/model_files_{name}/{cluster}_{agg_cluster}.pth'
@@ -205,7 +209,7 @@ class FlowerClient(fl.client.NumPyClient):
       print("work pls: "+str(config['model_update']))
 
       # delete mid models of other clusters after agg
-      if config['model_update'] == 'global_cluster' and config['alg'] == "AutoFLSat":
+      if config['model_update'] == 'global_cluster' and config['alg'] in ("AutoFLSat", "AutoFLSatWaterfall"):
         name = config['name']
         alg = config['alg']
         cluster_n = config['n_cluster']

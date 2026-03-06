@@ -27,7 +27,8 @@ dataset: "MNIST"
 # - "fedBuff2Sat" (with scheduling)
 # - "fedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
 # - "AutoFLSat" (still has bugs)
-# - "AutoFLSat2" (Proper hierarchical framework)
+# - "AutoFLSat2" (Previous hierarchical framework)
+# - "AutoFLSatWaterfall" (Waterfall AutoFLSat)
 alg: "fedAvg3Sat"
 
 

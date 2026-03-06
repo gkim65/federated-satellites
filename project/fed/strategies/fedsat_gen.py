@@ -34,6 +34,7 @@ from project.fed.strategies.fedbuff2_sat import fedBuff2Sat
 from project.fed.strategies.fedbuff3_sat import fedBuff3Sat
 from project.fed.strategies.AutoFLSat import AutoFLSat
 from project.fed.strategies.AutoFLSat2 import AutoFLSat2
+from project.fed.strategies.AutoFLSatWaterFall import AutoFLSat_Waterfall
 
 import pandas as pd
 import wandb
@@ -83,6 +84,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
         self.epochs_autoFLSat2 = int(config["epochs"])
         self.start_time_og = 0
         self.agg_true = False
+        self.waterfall_step = 0
+        self.waterfall_phase = "scatter"
     
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -382,8 +385,69 @@ class FedSatGen(fl.server.strategy.FedAvg):
                     fit_ins.config["duration"] = str(self.epochs_autoFLSat2)
                     return_clients.append((client, deepcopy(fit_ins)))
                 return return_clients
-        
+
+        elif config["alg"] == "AutoFLSatWaterfall":
+            (chosen_clients, agg_clients,
+            self.counter,
+            self.sim_times_currents,
+            self.cluster_round_starts,
+            self.cluster_round_currents,
+            self.model_type,
+            self.epochs_autoFLSat2,
+            self.start_time_og,
+            self.agg_true,
+            self.waterfall_step,
+            self.waterfall_phase) = AutoFLSat_Waterfall(
+                                        self.satellite_access_csv,
+                                        self.counter,
+                                        int(config["clients"]),
+                                        int(config["client_limit"]),
+                                        int(config["n_sat_in_cluster"]),
+                                        int(config["n_cluster"]),
+                                        self.factor_s,
+                                        self.factor_c,
+                                        server_round,
+                                        clients,
+                                        config["name"],
+                                        config["alg"],
+                                        config["epochs"],
+                                        self.sim_times_currents,
+                                        self.cluster_round_starts,
+                                        self.cluster_round_currents,
+                                        self.epochs_autoFLSat2,
+                                        self.start_time_og,
+                                        self.agg_true,
+                                        self.waterfall_step,
+                                        self.waterfall_phase)
+            
+            return_clients = []
+            self.satellite_client_list = []
+
+            if self.model_type == "local_cluster":
+                for client, cluster, agg_cluster in chosen_clients:
+                    self.cluster_num = cluster
+                    fit_ins.config["model_type"] = str(self.model_type)
+                    fit_ins.config["duration"] = str(self.epochs_autoFLSat2)
+                    fit_ins.config["cluster_identifier"] = str(cluster)
+                    fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    self.satellite_client_list.append(int(client.cid))
+                    return_clients.append((client, deepcopy(fit_ins)))
+                return return_clients
+
+            elif self.model_type in ("waterfall_scatter", "middle_exchange", "waterfall_allgather"):
+                for client, cluster, agg_cluster in chosen_clients:
+                    self.cluster_num = cluster
+                    self.satellite_client_list.append(int(client.cid))
+                for client, cluster, agg_cluster in agg_clients:
+                    fit_ins.config["model_type"] = str(self.model_type)
+                    fit_ins.config["cluster_identifier"] = str(cluster)
+                    fit_ins.config["agg_cluster"] = str(agg_cluster)
+                    fit_ins.config["duration"] = str(self.epochs_autoFLSat2)
+                    return_clients.append((client, deepcopy(fit_ins)))
+                return return_clients
         return [(client, fit_ins) for client in chosen_clients]
+    
+    
 
 
         
@@ -606,7 +670,12 @@ class FedSatGen(fl.server.strategy.FedAvg):
             evaluate_ins.config["cluster_identifier"] = str(self.cluster_num)
             evaluate_ins.config["agg_cluster"] = str(self.cluster_num)
             chosen_clients = [client for client in clients if int(client.cid) in self.satellite_client_list]
-        
+        elif config["alg"] == "AutoFLSatWaterfall":
+            evaluate_ins.config["model_update"] = self.model_type
+            evaluate_ins.config["cluster_identifier"] = str(self.cluster_num)
+            evaluate_ins.config["agg_cluster"] = str(self.cluster_num)
+            chosen_clients = [client for client in clients
+                            if int(client.cid) in self.satellite_client_list]
 
             
         # Return client/config pairs

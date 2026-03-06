@@ -12,6 +12,9 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, models, transforms
 
+# Add this at the top of cifar10data.py, outside any function:
+def repeat_channels(x):
+    return x.repeat(3, 1, 1)
 
 def load_data_CIFAR10(cid):
     """Load CIFAR-10 (training and test set)."""
@@ -77,7 +80,7 @@ def load_data_mnist(cid):
     # trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     trf = Compose([
     ToTensor(),
-    Lambda(lambda x: x.repeat(3, 1, 1)),  # replicate channel to make 3 channels
+    Lambda(repeat_channels),
     Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
