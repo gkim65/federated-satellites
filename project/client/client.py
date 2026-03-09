@@ -61,8 +61,8 @@ def train(net, trainloader, config, partition_id):
         total_epochs = int(config['epochs'])
       elif total_epochs < 0:
         total_epochs = 0
-      if config['dataset'] == "EUROSAT":
-        total_epochs = int(total_epochs/10)
+      if config['dataset'] == "EUROSAT" or "CIFAR10":
+        total_epochs = int(total_epochs)#/10)
     else:
       if 'model_type' in config:
         if config['model_type'] == "local_cluster":

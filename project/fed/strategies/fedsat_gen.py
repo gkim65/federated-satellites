@@ -679,8 +679,13 @@ class FedSatGen(fl.server.strategy.FedAvg):
             evaluate_ins.config["model_update"] = self.model_type
             evaluate_ins.config["cluster_identifier"] = str(self.cluster_num)
             evaluate_ins.config["agg_cluster"] = str(self.cluster_num)
-            chosen_clients = [client for client in clients
-                            if int(client.cid) in self.satellite_client_list]
+            if self.model_type == "allgather":
+                # Evaluate ALL clients after global model is complete
+                chosen_clients = clients  # all clients
+            else:
+                # Only evaluate current cluster during local training
+                chosen_clients = [client for client in clients
+                                if int(client.cid) in self.satellite_client_list]
 
             
         # Return client/config pairs
@@ -698,8 +703,9 @@ class FedSatGen(fl.server.strategy.FedAvg):
             return None, {}
 
          # Skip accuracy logging during waterfall phases
-        if self.model_type in ("waterfall_scatter", "middle_exchange", "waterfall_allgather"):
-            return None, {}
+        # if self.model_type in ("scatter", "middle_exchange", "allgather"):
+        #     return None, {}
+        
 
         # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
         aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
@@ -712,13 +718,17 @@ class FedSatGen(fl.server.strategy.FedAvg):
         aggregated_accuracy = sum(accuracies) / sum(examples)
         print(f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}")
     
-        
-        # log metrics to wandb
-        wandb.log({"acc": aggregated_accuracy, 
-                   "loss": aggregated_loss, 
-                   "server_round": server_round,
-                   "cluster_round": self.cluster_round_currents[self.cluster_num -1],
-                   "cluster_num": self.cluster_num})
+        print(f"Model type: {self.model_type}")
+        if self.model_type == "allgather":
+            wandb.log({"acc": aggregated_accuracy, "loss": aggregated_loss, 
+                    "server_round": server_round})
+        else:
+            # log metrics to wandb
+            wandb.log({"acc_local": aggregated_accuracy, 
+                    "loss_local": aggregated_loss, 
+                    "server_round": server_round,
+                    "cluster_round": self.cluster_round_currents[self.cluster_num -1],
+                    "cluster_num": self.cluster_num})
         
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}

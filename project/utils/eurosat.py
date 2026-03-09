@@ -22,7 +22,8 @@ def downloadEUROSAT():
     Download and extract the EuroSAT dataset if not already present
     """
     #  Download compressed dataset
-    url = 'http://madm.dfki.de/files/sentinel/EuroSAT.zip'
+    # url = "https://madm.dfki.de/files/sentinel/EuroSAT.zip"
+    url = "https://zenodo.org/record/7711810/files/EuroSAT_RGB.zip"
     save_path = "datasets/EuroSAT.zip"
     if not os.path.exists(save_path):
         print("Downloading Zip", save_path)
@@ -124,7 +125,7 @@ def load_EUROSAT(cid):
     ])
 
     train_data = EuroSAT(dataset, train_transform)
-    # test_data = EuroSAT(dataset, test_transform)
+    test_data = EuroSAT(dataset, test_transform)
 
     # Randomly split the dataset into 80% train / 20% test 
     # by subsetting the transformed train and test datasets
@@ -139,32 +140,28 @@ def load_EUROSAT(cid):
 
     # num_workers = 2
     # batch_size = 32
-
     cid = int(cid)
-    
-    datasets_noniid: List[Subset] = []
-    
-    distribute_noniid(100, 0.5, 41, train_data, datasets_noniid)
 
-    # Randomly split the dataset into 80% train / 20% test 
-    # by subsetting the transformed train and test datasets
-    train_size = 0.8
-    indices = list(range(int(len(datasets_noniid[cid]))))
-    split = int(train_size * len(datasets_noniid[cid]))
-    np.random.shuffle(indices)
+    datasets_noniid_train: List[Subset] = []
+    datasets_noniid_test: List[Subset] = []
 
-    train_data_cid = Subset(datasets_noniid[cid], indices=indices[:split])
-    test_data_cid = Subset(datasets_noniid[cid], indices=indices[split:])
+    distribute_noniid(40, 0.5, 41, train_data, datasets_noniid_train)
+    distribute_noniid(40, 0.5, 41, test_data, datasets_noniid_test)
 
-    print("Train/test sizes: {}/{}".format(len(train_data_cid), len(test_data_cid)))
+    print("Train/test sizes: {}/{}".format(
+        len(datasets_noniid_train[cid]), 
+        len(datasets_noniid_test[cid])))
 
     batch_size = 32
     num_workers = 2
+
     train_loader = DataLoader(
-        train_data_cid, batch_size=batch_size, num_workers=num_workers, shuffle=True
+        datasets_noniid_train[cid], batch_size=batch_size, 
+        num_workers=num_workers, shuffle=True
     )
     test_loader = DataLoader(
-        test_data_cid, batch_size=batch_size, num_workers=num_workers, shuffle=False
+        datasets_noniid_test[cid], batch_size=batch_size, 
+        num_workers=num_workers, shuffle=False
     )
 
     return train_loader, test_loader
