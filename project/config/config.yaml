@@ -5,7 +5,7 @@ wandb:
   proj_name: "NoAutoFLSatFEM_ACM"
 # FL Specific Parameters:
 fl:
-  round: 500 #1500
+  round: 150 #1500
   epochs: 10
   client_cpu: 1
   client_gpu: 0

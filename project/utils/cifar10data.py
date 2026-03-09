@@ -4,13 +4,14 @@ import flwr as fl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.transforms import Compose, ToTensor, Normalize, Lambda
+from torchvision.transforms import Compose, ToTensor, Normalize, Lambda, Resize, CenterCrop
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10, MNIST
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, models, transforms
+
 
 # Add this at the top of cifar10data.py, outside any function:
 def repeat_channels(x):
@@ -28,7 +29,13 @@ def load_data_CIFAR10(cid):
         if not os.path.exists(data_dir):
             raise ValueError(f"Required files do not exist, path: {data_dir}")
     
-    trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    # trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    trf = Compose([
+        Resize(256),
+        CenterCrop(224),
+        ToTensor(), 
+        Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
 
     dataset = CIFAR10(data_dir, download=True, transform=trf)
 
@@ -36,7 +43,7 @@ def load_data_CIFAR10(cid):
     
     datasets_noniid: List[Subset] = []
     
-    distribute_noniid(100, 0.5, 41, dataset, datasets_noniid)
+    distribute_noniid(40, 0.5, 41, dataset, datasets_noniid)
 
     # Randomly split the dataset into 80% train / 20% test 
     # by subsetting the transformed train and test datasets
@@ -93,7 +100,7 @@ def load_data_mnist(cid):
     
     datasets_noniid: List[Subset] = []
     
-    distribute_noniid(100, 0.5, 41, dataset, datasets_noniid)
+    distribute_noniid(40, 0.5, 41, dataset, datasets_noniid)
 
     # Randomly split the dataset into 80% train / 20% test 
     # by subsetting the transformed train and test datasets

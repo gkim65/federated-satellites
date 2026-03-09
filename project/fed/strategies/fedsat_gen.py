@@ -63,10 +63,10 @@ class FedSatGen(fl.server.strategy.FedAvg):
         # TODO: Change this it will keep causing index erros if you don't and switch the csv files
         og_s = int(self.satellite_access_csv_name.split("/")[-1].split("_")[0][:-1])
         og_c = int(self.satellite_access_csv_name.split("/")[-1].split("_")[1][:-1])
-
-
-        gs = config["gs_locations"] #[1:-1].split(",")
-        
+        try:
+            gs = config["gs_locations"] #[1:-1].split(",")
+        except:
+            gs = []
         self.factor_s = og_s / int(config["n_sat_in_cluster"])
         if config['alg'] == 'AutoFLSatWaterfall':
             self.factor_c = 1  # cluster IDs are already 1-indexed consecutive
@@ -87,8 +87,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
         self.epochs_autoFLSat2 = int(config["epochs"])
         self.start_time_og = 0
         self.agg_true = False
-        self.waterfall_step = 0
-        self.waterfall_phase = "scatter"
+        self.waterfall_seq_index = 0
+        self.waterfall_sequence = []
     
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -399,8 +399,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
             self.epochs_autoFLSat2,
             self.start_time_og,
             self.agg_true,
-            self.waterfall_step,
-            self.waterfall_phase) = AutoFLSat_Waterfall(
+            self.waterfall_seq_index,
+            self.waterfall_sequence) = AutoFLSat_Waterfall(
                                         self.satellite_access_csv,
                                         self.counter,
                                         int(config["clients"]),
@@ -420,8 +420,8 @@ class FedSatGen(fl.server.strategy.FedAvg):
                                         self.epochs_autoFLSat2,
                                         self.start_time_og,
                                         self.agg_true,
-                                        self.waterfall_step,
-                                        self.waterfall_phase,                            
+                                        self.waterfall_seq_index,
+                                        self.waterfall_sequence,                            
                                         float(config.get("dropout_rate", 0.0)))  # add this
             
             
@@ -695,6 +695,10 @@ class FedSatGen(fl.server.strategy.FedAvg):
         """Aggregate evaluation accuracy using weighted average."""
 
         if not results:
+            return None, {}
+
+         # Skip accuracy logging during waterfall phases
+        if self.model_type in ("waterfall_scatter", "middle_exchange", "waterfall_allgather"):
             return None, {}
 
         # Call aggregate_evaluate from base class (FedAvg) to aggregate loss and metrics
