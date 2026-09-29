@@ -1,0 +1,28 @@
+[project]
+name = "flystack-windows"
+version = "0.1.0"
+description = "Satellite ground and inter-satellite contact windows from brahe for federated-learning simulation"
+readme = "README.md"
+authors = [
+    { name = "Grace Kim", email = "gracek1459@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "brahe>=1.7",
+    "numpy>=2.4.6",
+    "pandas>=3.0.6",
+    "pyarrow>=25.0.1",
+    "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+flystack-windows = "flystack_windows:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

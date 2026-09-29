@@ -55,6 +55,22 @@ python -m project.utils.stk
 
 These commands should make a new folder called datasets which now has all of the data downloaded for you to use in your experiments.
 
+**Generating windows for any Walker constellation (brahe)**
+
+Instead of downloading the STK CSVs, you can generate contact windows for your own constellation
+with [`windowgen/`](windowgen/README.md). It uses brahe and writes the same CSV layout, so the
+existing strategies read the files unchanged. `windowgen/configs/stk_fit_10s_4c.yaml`
+reproduces the `10s_4c` STK ISL export to within 1 s per window.
+
+```
+cd windowgen && uv sync
+uv run flystack-windows configs/stk_fit_10s_4c.yaml --out ../datasets/landsat
+```
+
+Then set `stk.sim_fname: datasets/landsat/10s_4c_brahe_star_inter.csv` in `config.yaml`.
+`windowgen` has its own environment because brahe and flwr 1.19 need incompatible versions of
+`rich`.
+
 ## Running Scripts
 
 Using the `hydra` config file manager, you can run files by running:

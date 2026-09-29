@@ -1,0 +1,22 @@
+# Example Walker delta shell with ground contacts and ISLs. Illustrative values, not a real mission.
+name: example_delta_550km
+constellation:
+  n_planes: 6
+  sats_per_plane: 10
+  phasing: 1
+  pattern: delta
+  altitude_km: 550.0
+  inclination_deg: 53.0
+  epoch_utc: "2024-04-14T16:00:00Z"
+  duration_days: 7
+  propagator: sgp4
+ground:
+  min_elevation_deg: 10.0
+  providers: [ksat]
+isl:
+  grazing_altitude_km: 80.0
+  max_range_km: 5000.0
+  earth_model: wgs84
+  grid_step_s: 10.0
+extra:
+  tag: brahe_delta

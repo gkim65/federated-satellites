@@ -1,0 +1,26 @@
+# Walker star 40/4/1 whose ISL windows reproduce the STK export datasets/landsat/10s_4c_s_landsat_star_inter.csv.
+#
+# NOTE: these values were fitted to that CSV, not read from the STK scenario. The two-body period
+# was set from the 2842.454 s spacing between successive windows of one cross-plane pair (half an
+# orbit), and the grazing height from the window durations. With them, per-pair window starts and
+# durations agree with the STK rows to within about 1 s (scripts/compare_stk_isl.py).
+name: stk_fit_10s_4c
+constellation:
+  n_planes: 4
+  sats_per_plane: 10
+  phasing: 1
+  pattern: star
+  altitude_km: 506.404       # above brahe.R_EARTH; semi-major axis 6884.541 km
+  inclination_deg: 90.0
+  raan0_deg: 0.0
+  mean_anomaly0_deg: 0.0
+  epoch_utc: "2024-04-14T16:00:00Z"
+  duration_days: 91
+  propagator: keplerian
+isl:
+  grazing_altitude_km: 6.0
+  earth_model: wgs84
+  grid_step_s: 10.0
+  both_directions: true
+extra:
+  tag: brahe_star
