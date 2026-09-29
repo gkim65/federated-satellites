@@ -109,3 +109,15 @@ def test_full_span_duration_matches_stk_always_on_marker():
     s = spec(duration_s=91 * 86400.0, propagator="keplerian")
     iw = isl_windows(s, build_constellation(s), IslSpec(grazing_altitude_km=0.0, grid_step_s=600.0))
     assert (to_legacy_isl(s, iw)["Duration (sec)"] == 7862400.000).all()
+
+
+def test_committed_configs_load():
+    from pathlib import Path
+
+    from flystack_windows import load_scenario, load_stations
+    configs = Path(__file__).parent.parent / "configs"
+    for path in sorted(configs.glob("*.yaml")):
+        load_scenario(path)
+    sc = load_scenario(configs / "stk_fit_10s_10c.yaml")
+    names = [s.get_name() for s in load_stations(sc.ground)]
+    assert len(names) == 13 and "Sioux_Falls" in names and "Seattle" not in names

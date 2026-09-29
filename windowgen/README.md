@@ -70,8 +70,21 @@ with `scripts/compare_stk_isl.py`:
 The ACM waterfall scheduler (`scheduleAdjacentISL`, 50 cycles, no dropout) picks the same
 windows from both sources to within 0.3 s, for P = 3 and P = 4.
 
-The ground-station files (`10s_10c`, `12s_12c`) have not been compared yet. That needs the STK
-facility coordinates and elevation mask.
+`configs/stk_fit_10s_10c.yaml` and `configs/stk_fit_12s_12c.yaml` use the same orbit and phasing
+with a 0 deg elevation mask. Their stations are the 13 sites of
+`stations/igs13_arxiv2511.14889.geojson`, taken from Table 3 of Kim, Svoboda and Lane, "Bringing
+Federated Learning to Space", arXiv:2511.14889. Those coordinates are rounded to about 0.01-0.1 deg,
+so the ground windows agree statistically rather than to the second. Checked with
+`scripts/compare_stk_ground.py` over the full 91 days:
+
+| File | Passes (brahe / STK) | Per-station count ratio | \|start diff\| median / 99% | \|duration diff\| median / 99% |
+|---|---|---|---|---|
+| `10s_10c_s_landsat_star.csv` | 719,283 / 716,388 | 0.998-1.018 | 3.9 s / 36 s | 5.1 s / 60 s |
+| `12s_12c_s_landsat_star.csv` | 1,035,776 / 1,031,632 | 0.998-1.018 | 3.9 s / 36 s | 5.1 s / 61 s |
+
+Pass counts exclude passes cut by the scenario start or end. About 0.4% of passes, low grazing
+ones near the 0 deg horizon, appear in one source but not the other. The STK exports also include
+a Seattle station that is not in Table 3 and is not generated here.
 
 ## Limits
 

@@ -1,0 +1,27 @@
+# Walker star 100/10/1 with ground contacts to the 13-station network of
+# G. Kim, F. Svoboda, N. Lane, "Bringing Federated Learning to Space", arXiv:2511.14889, Table 3,
+# reproducing the STK export datasets/landsat/10s_10c_s_landsat_star.csv.
+#
+# NOTE: the orbit values are the ones fitted to the STK ISL exports (see stk_fit_10s_4c.yaml);
+# the 0 deg elevation mask and phasing 1 were fitted to the ground export. Table 3 coordinates are
+# rounded, so pass times agree with STK to seconds rather than sub-second
+# (scripts/compare_stk_ground.py). The STK export also has a Seattle station that is not in
+# Table 3 and is not generated here.
+name: stk_fit_10s_10c
+constellation:
+  n_planes: 10
+  sats_per_plane: 10
+  phasing: 1
+  pattern: star
+  altitude_km: 506.404
+  inclination_deg: 90.0
+  raan0_deg: 0.0
+  mean_anomaly0_deg: 0.0
+  epoch_utc: "2024-04-14T16:00:00Z"
+  duration_days: 91
+  propagator: keplerian
+ground:
+  min_elevation_deg: 0.0
+  stations_file: ../stations/igs13_arxiv2511.14889.geojson
+extra:
+  tag: brahe_star

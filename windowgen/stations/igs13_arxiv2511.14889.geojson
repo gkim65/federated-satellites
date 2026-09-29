@@ -1,0 +1,188 @@
+{
+ "type": "FeatureCollection",
+ "source": "G. Kim, F. Svoboda, N. Lane, 'Bringing Federated Learning to Space', arXiv:2511.14889, Table 3 (lat, lon in deg; altitude 0 m assumed)",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -96.72,
+     43.55,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Sioux_Falls"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     109.5,
+     18.25,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Sanya"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     28.03,
+     -26.2,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Johannesburg"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -64.18,
+     -31.4,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Cordoba"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     18.95,
+     69.65,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Tromso"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     77.2,
+     39.1,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Kashi"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     116.4,
+     39.9,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Beijing"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.1,
+     53.1,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Neustrelitz"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     119.8,
+     -2.99,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Parepare"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     133.9,
+     -25.1,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Alice_Springs"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -147.7,
+     64.8,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Fairbanks"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -105.7,
+     53.2,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Prince_Albert"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     78.5,
+     17.4,
+     0.0
+    ]
+   },
+   "properties": {
+    "name": "Shadnagar"
+   }
+  }
+ ]
+}
