@@ -20,3 +20,6 @@ Strategies/csv_stk/data_org_pipeline.ipynb
 /outputs
 .venv
 multirun/*
+
+# Local analysis notebook (large outputs, private run paths); not part of the package
+test.ipynb
