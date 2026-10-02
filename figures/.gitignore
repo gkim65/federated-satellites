@@ -1,0 +1,4 @@
+# Generated figures, downloaded wandb histories and private run paths stay local.
+out/
+cache/
+wandb_runs.local.yaml

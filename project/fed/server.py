@@ -1,6 +1,11 @@
-import flwr as fl
-
 import os
+
+# NOTE: under `uv run`, Ray 2.47 by default rebuilds the uv environment inside every worker from
+# a copy of the working directory, which fails for this project. Workers inherit the driver's
+# environment instead. Must be set before Ray is imported, and flwr imports Ray.
+os.environ.setdefault("RAY_ENABLE_UV_RUN_RUNTIME_ENV", "0")
+
+import flwr as fl
 import ray
 
 import gc
@@ -78,12 +83,14 @@ def main(cfg: DictConfig):
             ray.shutdown()
         ray.init(ignore_reinit_error=True)
 
-        if cfg.wandb.use:
-            wandb.init(
-                entity=cfg.wandb.entity,
-                project=t_name,
-                config=config_dict
-            )
+        # With wandb.use=False wandb runs in disabled mode, so the strategies' wandb.log calls
+        # are no-ops and no account is needed.
+        wandb.init(
+            entity=cfg.wandb.entity,
+            project=t_name,
+            config=config_dict,
+            mode=None if cfg.wandb.use else "disabled",
+        )
 
 
         def fit_config(server_round: int):  
@@ -146,8 +153,7 @@ def main(cfg: DictConfig):
             ray.shutdown()
             gc.collect()
 
-            if cfg.wandb.use:
-                wandb.finish()
+            wandb.finish()
 
             try:
                 alg  = config_dict["alg"]

@@ -245,9 +245,13 @@ def AutoFLSat_Waterfall(sat_df,
 # -------------------------------------------------------
 
 def scheduleAdjacentISL(sat_df, counter, factor_c, start_time_og,
-                        epochs, pair_left, pair_right, dropout_rate=0.0):
+                        epochs, pair_left, pair_right, dropout_rate=0.0,
+                        wandbUse=True, verbose=True):
     """
     Find the next available inter-SL window for adjacent plane pairs only.
+
+    `wandbUse` logs dropped-window counts to wandb; `verbose` prints each selected or dropped
+    window. Both can be turned off to run the scheduler on its own, e.g. for the dropout table.
     """
     count_temp    = counter
     found_left    = False
@@ -293,22 +297,26 @@ def scheduleAdjacentISL(sat_df, counter, factor_c, start_time_og,
                 if cluster_id_1 == l1 and cluster_id_2 == l2:
                     if np.random.random() < dropout_rate:
                         dropped_left += 1
-                        print(f"  ✗ Dropped left {pair_left} @ t={temp_start:.0f}")
+                        if verbose:
+                            print(f"  ✗ Dropped left {pair_left} @ t={temp_start:.0f}")
                     else:
                         left_start, left_end = temp_start, temp_end
                         found_left = True
-                        print(f"  ✓ Left {pair_left} @ t={temp_start:.0f} (dur={duration:.0f}s)")
+                        if verbose:
+                            print(f"  ✓ Left {pair_left} @ t={temp_start:.0f} (dur={duration:.0f}s)")
 
             if not found_right and pair_right is not None:
                 r1, r2 = min(pair_right), max(pair_right)
                 if cluster_id_1 == r1 and cluster_id_2 == r2:
                     if np.random.random() < dropout_rate:
                         dropped_right += 1
-                        print(f"  ✗ Dropped right {pair_right} @ t={temp_start:.0f}")
+                        if verbose:
+                            print(f"  ✗ Dropped right {pair_right} @ t={temp_start:.0f}")
                     else:
                         right_start, right_end = temp_start, temp_end
                         found_right = True
-                        print(f"  ✓ Right {pair_right} @ t={temp_start:.0f} (dur={duration:.0f}s)")
+                        if verbose:
+                            print(f"  ✓ Right {pair_right} @ t={temp_start:.0f} (dur={duration:.0f}s)")
 
         count_temp += 1
 
@@ -324,12 +332,14 @@ def scheduleAdjacentISL(sat_df, counter, factor_c, start_time_og,
     epoch_train    = new_start_time - start_time_og
     duration_round = new_end_time - new_start_time
 
-    wandb.log({"dropped_windows_left":  dropped_left,
-               "dropped_windows_right": dropped_right,
-               "total_dropped_windows": dropped_left + dropped_right,
-               "dropout_rate": dropout_rate})
+    if wandbUse:
+        wandb.log({"dropped_windows_left":  dropped_left,
+                   "dropped_windows_right": dropped_right,
+                   "total_dropped_windows": dropped_left + dropped_right,
+                   "dropout_rate": dropout_rate})
 
-    print(f"  Window: start={new_start_time:.0f}, dur={duration_round:.0f}s, "
-          f"idle={idle_time:.0f}s, dropped={dropped_left + dropped_right}")
+    if verbose:
+        print(f"  Window: start={new_start_time:.0f}, dur={duration_round:.0f}s, "
+              f"idle={idle_time:.0f}s, dropped={dropped_left + dropped_right}")
 
     return new_start_time, new_end_time, count_temp, epoch_train, idle_time, duration_round

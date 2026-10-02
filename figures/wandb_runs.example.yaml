@@ -1,0 +1,7 @@
+# Copy to wandb_runs.local.yaml (gitignored) and fill in your own wandb run paths
+# ("entity/project/run_id"). Only needed the first time, or with --refresh; afterwards the
+# figure scripts read the cached histories in figures/cache/.
+fig5_convergence:
+  2: your-entity/your-project/run-id-for-P2
+  3: your-entity/your-project/run-id-for-P3
+  4: your-entity/your-project/run-id-for-P4

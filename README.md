@@ -1,125 +1,101 @@
 # federated-satellites
 
+This repository contains FLySTacK, a simulation platform for federated learning (FL) in satellite
+constellations, and the code for the AutoFLSat algorithm. Satellites are Flower clients, and
+contact windows decide when each one can talk to a ground station or to another satellite.
+Those windows can come from two sources, which produce the same CSV format:
 
-This repository provides example frameworks for pre-computed satellite constellation access windows to inform when and how satellites (clients) can communicate with ground stations (servers), enabling realistic simulation and analysis of communication-constrained federated learning workflows in space. This repo contians the code and examples supporting our work FLySTacK—our novel platform for satellite constellation design and hardware-aware federated learning evaluation. The full paper can be found at: https://arxiv.org/abs/2411.00263
+- **brahe (recommended).** [`windowgen/`](windowgen/README.md) generates ground-station and
+  inter-satellite-link windows for any circular Walker constellation with the open-source
+  [brahe](https://docs.brahe.space/latest/) astrodynamics library.
+- **STK.** The pre-computed exports used in earlier papers, downloaded with
+  `python -m project.utils.stk`. brahe reproduces them: inter-satellite windows to within 1 s,
+  ground passes to within 0.4% in count (see `windowgen/README.md`).
 
-## Instructions for installing dependencies and cloning this repository
+Papers: https://arxiv.org/abs/2411.00263 and https://arxiv.org/abs/2511.14889
 
-First, clone the repository on the folder you'd like to run this in.
+## Quickstart
+
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```
 git clone https://github.com/gkim65/federated-satellites.git
-```
-
-You can then `cd` into the folder created from this command, `federated-satellites`
-
-```
-cd loc-gsopt
-```
-
-And create a virtual environment to download all of your dependencies. I recommend using `uv` which can be installed using the documentation linked [here](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2). 
-
-### Library management using `uv`:
-
-Create a new virtual environment with `uv` on a Mac inside the git folder, and install dependencies existing in the `pyproject.toml` file.
-
-```
-uv venv
-source .venv/bin/activate 
+cd federated-satellites
 uv sync
+
+# 1. Contact windows for a 3-plane x 10-satellite Walker star, generated with brahe (about 30 s)
+cd windowgen
+uv sync
+uv run flystack-windows configs/stk_fit_10s_3c.yaml --out ../datasets/landsat
+cd ..
+
+# 2. A short AutoFLSat run on MNIST over those windows (MNIST downloads automatically)
+uv run python -m project.fed.server wandb.use=False alg=AutoFLSatWaterfall dataset=MNIST \
+    stk.sim_fname=datasets/landsat/10s_3c_brahe_star_inter.csv \
+    stk.n_sat_in_cluster=10 stk.n_cluster=3 fl.round=6 fl.epochs=1 trial=1
 ```
 
+`windowgen` has its own environment, because brahe and flwr 1.19 need incompatible versions of
+`rich`. To simulate your own constellation, copy a file in `windowgen/configs/` and edit it. The
+orbit, phasing, ground stations, elevation mask and link model are all fields in the YAML.
 
+## Datasets
 
+Run these from the repository root. Each one fills `datasets/`.
 
-## Using this Repository
+- **FEMNIST:** `uv run python -m project.utils.femnist`
+- **EuroSAT:** `uv run python -m project.utils.eurosat`
+- **CIFAR10, MNIST:** downloaded by torchvision on first use
+- **STK window CSVs (optional):** `uv run python -m project.utils.stk`
 
-First, make sure to download the datasets needed for testing, which can be done using the following commands from the base folder `federated-satellites`:
+## Running simulations
 
-**FEMNIST dataset:**
-```
-python -m project.utils.femnist
-```
-**EUROSAT dataset**
-```
-python -m project.utils.eurosat
-```
-
-**CIFAR10** (already included in torch libraries)
-
-**STK CSVs**
+Settings live in `project/config/config.yaml` and can be overridden on the command line with
+Hydra:
 
 ```
-python -m project.utils.stk
+uv run python -m project.fed.server alg=AutoFLSatWaterfall dataset=EUROSAT stk.n_cluster=4
+uv run python -m project.fed.server --multirun stk.n_cluster=2,3,4
 ```
 
-These commands should make a new folder called datasets which now has all of the data downloaded for you to use in your experiments.
+Set `wandb.use=False` to run without a Weights & Biases account. With `wandb.use=True`, set
+`wandb.entity` to your own entity.
 
-**Generating windows for any Walker constellation (brahe)**
+## Paper figures
 
-Instead of downloading the STK CSVs, you can generate contact windows for your own constellation
-with [`windowgen/`](windowgen/README.md). It uses brahe and writes the same CSV layout, so the
-existing strategies read the files unchanged. `windowgen/configs/stk_fit_10s_4c.yaml`
-reproduces the `10s_4c` STK ISL export to within 1 s per window.
+[`figures/`](figures/README.md) regenerates the AutoFLSat paper's Figures 3 and 5 and Tables 2
+and 3, from either STK or brahe windows.
 
-```
-cd windowgen && uv sync
-uv run flystack-windows configs/stk_fit_10s_4c.yaml --out ../datasets/landsat
-```
+## Repository layout
 
-Then set `stk.sim_fname: datasets/landsat/10s_4c_brahe_star_inter.csv` in `config.yaml`.
-`windowgen` has its own environment because brahe and flwr 1.19 need incompatible versions of
-`rich`.
+- **`project/config/config.yaml`** — all simulation settings. Key fields:
+  - `alg` — FL algorithm:
+    - `fedAvgSat`, `fedProxSat`, `fedBuffSat` — ground-station FL.
+    - `...2Sat` variants — add scheduling.
+    - `...3Sat` variants — add intra-plane links; use with 10+ satellites per plane.
+    - `AutoFLSat2` — hierarchical, ground-free.
+    - `AutoFLSatWaterfall` — the AutoFLSat waterfall all-reduce over inter-plane links.
+  - `dataset` — `FEMNIST`, `EUROSAT`, `CIFAR10` or `MNIST`.
+  - `fl.round`, `fl.epochs`, `trial` — Flower rounds, local epochs per round, repeated trials.
+  - `stk.sim_fname` — the window CSV. Ground-station algorithms take a ground file
+    (`{S}s_{P}c_..._star.csv`); AutoFLSat algorithms take an inter-satellite file
+    (`..._inter.csv`).
+  - `stk.n_sat_in_cluster`, `stk.n_cluster` — satellites per plane and planes to simulate. They
+    must divide the S and P in the file name (e.g. 1, 2, 5 or 10 satellites from a 10-per-plane
+    file).
+  - `stk.client_limit`, `stk.gs_locations` — clients per round, and which ground stations to use.
+  - `data_rate`, `power_consumption_per_epoch` — model transfer time per pass (s) and training
+    time per epoch (s).
+  - `dropout_rate` — probability that an inter-satellite window fails (AutoFLSatWaterfall).
+- **`project/fed/server.py`** — entry point; runs Flower's simulation with `FedSatGen`
+  (`project/fed/strategies/fedsat_gen.py`), which selects clients from the contact windows.
+- **`project/fed/strategies/`** — one module per algorithm.
+- **`project/client/client.py`** — the Flower client and per-dataset data partitioning.
+- **`windowgen/`** — brahe contact-window generator (own `uv` environment).
+- **`figures/`** — scripts that regenerate the AutoFLSat paper figures and tables.
 
-## Running Scripts
-
-Using the `hydra` config file manager, you can run files by running:
-
-```
-python -m project.fed.server
-```
-
-You can run sweeps/perform parameter runs
-
-```
-python -m project.fed.server --multirun problem.sat_num=1,5,10
-```
-
-or just change the parameters directly in `config\config.yaml`. 
-
-
-## Additional notes:
-
-The code within this repository is arranged in the following format:
-
-At the base of the folder, you'll find 3 main files that one would interact with:
-
-- `project/config/config.yaml` : The main file that would be modified by the user, where a multitude of parameters are available to play around with. Some most important parameters are outlined below:
-    - **Round**: Number of FL rounds to complete
-    - **Epochs**: Number of epochs to train on each round, dependent on model
-    - **Trial**: Number of times to run this one script, for comparison of runs
-    - **Clients**: Number of clients tested in the simulation
-    - **Client Limit**: Number of clients that are limited to join in each FL round
-    - **Dataset**: Currently supports: "FEMNIST","EUROSAT", "CIFAR10", however will need to download individual datasets using the instructions above
-    - **Alg**: The different FL algorithms that can be tested, ranges from: 
-        - "FedAvgSat"
-        - "FedAvg2Sat" (with scheduling)
-        - "FedAvg3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
-        - "FedProxSat"
-        - "FedProx2Sat" (with scheduling)
-        - "FedProx3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
-        - "FedBuffSat"
-        - "FedBuff2Sat" (with scheduling)
-        - "FedBuff3Sat" (with scheduling and intra sat links, use for clients of 10+ on one cluster)
-        - "AutoFL2Sat" (Proper hierarchical framework)
-        ** all of these FL algorithms can be looked into deeper in the `/Strategies` folder
-    - **sim_fname**: this is the file of the stk csv that is entered into the flower pipeline, will need to be saved by downloading from the steps above. The current example file that is put in should work for all algorithms except the AutoFLSat files (which need the `datasets/landsat/10s_4c_s_landsat_star_inter.csv` instead)
-    - **n_sat_in_cluster**: Depending on the size of the initial constellation tested in the sim_fname file (which is saved in the format 10s_10c), the two numbers indicates how many satellites per cluster and #s of clusters are in the constellation. Factors of these numbers can be tested within the simulation, so for simulations with 10 satellites per cluster, parameter sweeps can be done over 1, 2, 5, and 10 satellites.
-    - **n_cluster**: Same story for this!
-    - **prox_term**: only for fedProx, testing how much to add in for proximal term.
-- `project/fed/server.py`: Template file, copies are made with config_maker for various parameter sweeps, as each server.py file looks at all of the config files in the config folder made by config_maker
-- `project/client/client.py`: A generalized client that can accomodate datasets of "EUROSAT", "FEMNIST", and "CIFAR10" just need to toggle between the options inside `config.yaml`, additional clients can be made by adding in clients here
-- `project/strategies`: a list of strategies already implemented using the csv times listed inside STK
+NOTE: the CIFAR10, MNIST and EuroSAT partitions are fixed at 100 non-IID splits, so a simulated
+constellation can have at most 100 satellites with those datasets.
 
 
 If you would like to use this repo, or this work in any way, please cite the following paper in your research!
